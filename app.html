@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Goldex</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens: pearl (light) / ink (dark) ---------- */
+:root{
+ --bg:#ECEAE6;--bg2:#F6F4F0;--fg:#131313;--fg2:#3A3936;--muted:#7C786F;
+ --glass:rgba(255,255,255,.52);--glass2:rgba(255,255,255,.72);--gline:rgba(255,255,255,.75);--line:rgba(20,18,14,.09);--hi:rgba(255,255,255,.95);
+ --shadow:0 1px 1px rgba(0,0,0,.03),0 12px 32px -14px rgba(40,30,10,.22);
+ --gold:#A8854A;--gold2:#D9BD86;--glow1:rgba(217,189,134,.55);--glow2:rgba(178,196,222,.55);
+ --pill:#141414;--pillfg:#F5F2EC;--danger:#A2412F;--ok:#3E7A55;
+ --serif:"Instrument Serif",ui-serif,Georgia,serif;--sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#070708;--bg2:#0E0E10;--fg:#F2EFE9;--fg2:#C9C5BD;--muted:#8A867E;
+ --glass:rgba(255,255,255,.045);--glass2:rgba(255,255,255,.08);--gline:rgba(255,255,255,.10);--line:rgba(255,255,255,.08);--hi:rgba(255,255,255,.16);
+ --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 24px 60px -24px rgba(0,0,0,.8);
+ --gold:#D6B879;--gold2:#8C6E3A;--glow1:rgba(201,160,90,.28);--glow2:rgba(110,130,170,.22);
+ --pill:#F2EFE9;--pillfg:#0A0A0B;--danger:#E08A74;--ok:#8FC6A0}}
+:root[data-theme="dark"]{--bg:#070708;--bg2:#0E0E10;--fg:#F2EFE9;--fg2:#C9C5BD;--muted:#8A867E;--glass:rgba(255,255,255,.045);--glass2:rgba(255,255,255,.08);--gline:rgba(255,255,255,.10);--line:rgba(255,255,255,.08);--hi:rgba(255,255,255,.16);--shadow:0 1px 0 rgba(255,255,255,.04) inset,0 24px 60px -24px rgba(0,0,0,.8);--gold:#D6B879;--gold2:#8C6E3A;--glow1:rgba(201,160,90,.28);--glow2:rgba(110,130,170,.22);--pill:#F2EFE9;--pillfg:#0A0A0B;--danger:#E08A74;--ok:#8FC6A0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+a{color:inherit;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent)}
+/* ambient light */
+.aura{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:radial-gradient(120% 80% at 50% -10%,var(--bg2),var(--bg) 60%)}
+.aura::before,.aura::after,.aura b{content:"";position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(90px);opacity:.9;will-change:transform}
+.aura b{background:radial-gradient(circle,color-mix(in srgb,var(--gold) 30%,transparent),transparent 62%);width:40vmax;height:40vmax;top:40%;left:35%;animation:auraC 26s ease-in-out infinite alternate;opacity:.55}
+.aura s{position:absolute;inset:-20%;background:conic-gradient(from 210deg at 50% 50%,transparent 0 60%,rgba(255,255,255,.05) 66%,transparent 72%);animation:sweep 38s linear infinite;mix-blend-mode:screen}
+@keyframes auraC{to{transform:translate(-14vmax,-10vmax) scale(1.25)}}@keyframes sweep{to{transform:rotate(360deg)}}
+.aura::before{background:radial-gradient(circle,var(--glow1),transparent 65%);top:-26vmax;right:-14vmax;animation:auraA 32s ease-in-out infinite alternate}
+.aura::after{background:radial-gradient(circle,var(--glow2),transparent 65%);bottom:-30vmax;left:-18vmax;animation:auraB 40s ease-in-out infinite alternate}
+.aura i{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@keyframes auraA{to{transform:translate(-8vmax,10vmax) scale(1.08)}}@keyframes auraB{to{transform:translate(10vmax,-8vmax) scale(1.12)}}
+/* type */
+h1{font:400 clamp(2rem,3.4vw,2.9rem)/1.02 var(--serif);letter-spacing:-.015em;margin:.2rem 0 1.2rem}
+h2{font:500 1rem/1.3 var(--sans);margin:0 0 .8rem;letter-spacing:-.01em}
+h3{font:500 .92rem/1.3 var(--sans);margin:1rem 0 .5rem;color:var(--fg2)}
+.muted{color:var(--muted)}.small{font-size:.82rem}
+code{font:.85em/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--glass2);padding:.15rem .4rem;border-radius:6px}
+/* glass */
+.panel,.mbox,.pop,.side,.auth,.stat,.ctable{position:relative;background:var(--glass);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);border:1px solid transparent;background-clip:padding-box;box-shadow:var(--shadow),inset 0 1px 0 var(--hi),inset 0 -1px 0 rgba(0,0,0,.04)}
+.panel::before,.side::before,.auth::before,.stat::before,.ctable::before,.pop::before,.mbox::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(135deg,var(--gline) 0%,transparent 35%,transparent 65%,color-mix(in srgb,var(--gold) 35%,var(--gline)) 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.panel::after,.stat::after,.auth::after,.ctable::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(420px circle at var(--mx,50%) var(--my,-20%),color-mix(in srgb,var(--hi) 60%,transparent),transparent 60%);opacity:0;transition:opacity .35s;pointer-events:none;z-index:0}
+.panel:hover::after,.stat:hover::after,.auth:hover::after,.ctable:hover::after{opacity:1}
+.panel>*,.stat>*,.auth>*{position:relative;z-index:1}
+.panel{border-radius:24px;padding:1.3rem 1.4rem;margin:0 0 1rem;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+.panel:hover{transform:translateY(-2px);box-shadow:var(--shadow),0 24px 50px -30px var(--glow1),inset 0 1px 0 var(--hi)}
+.panel.live{box-shadow:var(--shadow),0 0 0 1px color-mix(in srgb,var(--gold) 40%,transparent),0 0 60px -20px var(--glow1)}
+.panel.live h2::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:.5rem;box-shadow:0 0 0 0 var(--gold);animation:ping 1.8s ease-out infinite}
+@keyframes ping{to{box-shadow:0 0 0 10px transparent}}
+.main>*{animation:rise .6s cubic-bezier(.2,.8,.2,1) both}.main>*:nth-child(2){animation-delay:.06s}.main>*:nth-child(3){animation-delay:.12s}.main>*:nth-child(4){animation-delay:.18s}.main>*:nth-child(5){animation-delay:.24s}.main>*:nth-child(6){animation-delay:.3s}.main>*:nth-child(n+7){animation-delay:.36s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.lede{font-size:1rem;color:var(--muted);margin:-.6rem 0 1rem;max-width:60ch}
+/* buttons: liquid pills */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:999px;border:1px solid var(--gline);background:var(--glass2);color:var(--fg);cursor:pointer;text-decoration:none;font:500 .88rem/1.2 var(--sans);margin:.15rem .25rem .15rem 0;box-shadow:inset 0 1px 0 var(--hi),0 1px 2px rgba(0,0,0,.06);transition:transform .15s ease,background .2s ease,box-shadow .2s ease;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.btn:hover{background:var(--hi)}.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--pill);color:var(--pillfg);border-color:transparent;box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent),0 8px 24px -10px var(--glow1),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.primary{position:relative;overflow:hidden}.btn.primary::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s ease}.btn.primary:hover::after{transform:translateX(120%)}.btn.primary:hover{filter:brightness(1.08);box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 70%,transparent),0 12px 34px -10px var(--glow1),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+button.link{background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit;color:var(--muted)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* inputs */
+input,select,textarea{font:400 .92rem/1.3 var(--sans);color:var(--fg);background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:.6rem .75rem;max-width:100%;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:color-mix(in srgb,var(--gold) 60%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 14%,transparent),0 0 24px -6px var(--glow1)}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--gold)}
+input[type=color]{padding:.2rem;height:42px;width:80px}
+label{display:block;margin:.55rem 0;font-size:.85rem;color:var(--fg2)}
+label>input:not([type=checkbox]):not([type=radio]),label>select,label>textarea{display:block;width:100%;margin-top:.3rem;color:var(--fg)}
+label.chk,label.inl{display:inline-flex;gap:.45rem;align-items:center;margin:.25rem .9rem .25rem 0;color:var(--fg)}
+textarea{min-height:110px;resize:vertical}
+fieldset{border:1px solid var(--line);border-radius:14px;margin:.6rem 0;padding:.6rem .9rem}legend{font-size:.8rem;color:var(--muted);padding:0 .3rem}
+/* layout bits */
+.row{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}.spacer{flex:1}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.1rem 1rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem}
+.stat{border-radius:20px;padding:1rem 1.1rem;font-size:.82rem;color:var(--muted);transition:transform .3s}.stat:hover{transform:translateY(-2px)}
+.stat b{display:block;font:400 2.3rem/1 var(--serif);color:var(--fg);margin-bottom:.3rem}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.9rem}
+th{font-weight:500;color:var(--muted);font-size:.8rem;text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:.6rem .6rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.click{cursor:pointer}tr.click:hover td,.ctable tbody tr:hover td{background:color-mix(in srgb,var(--glass2) 70%,transparent)}
+.badge,.tagp{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.08rem .55rem;font-size:.75rem;background:var(--glass2);color:var(--fg2);margin:.1rem .2rem .1rem 0;white-space:nowrap}
+.tagp.warn{color:var(--danger)}
+.banner{background:var(--glass);border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);border-radius:16px;padding:.75rem 1rem;margin:0 0 1rem;box-shadow:0 0 30px -12px var(--glow1)}
+.note{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:.65rem .9rem;margin:.6rem 0;font-size:.86rem;color:var(--fg2)}
+.tabs,.seg{display:inline-flex;gap:.2rem;padding:.25rem;border-radius:999px;background:var(--glass);border:1px solid var(--gline);margin:0 0 1rem;flex-wrap:wrap;box-shadow:inset 0 1px 0 var(--hi)}
+.tabs a,.seg button{padding:.42rem .95rem;border-radius:999px;text-decoration:none;font:500 .85rem var(--sans);color:var(--muted);background:none;border:0;cursor:pointer}
+.tabs a.on,.seg button.on{background:var(--pill);color:var(--pillfg)}.seg button:disabled{opacity:.4;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin:.5rem 0}
+.chip{display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--line);border-radius:999px;padding:.28rem .75rem;background:var(--glass2);cursor:pointer;font:500 .8rem var(--sans);color:var(--fg);text-decoration:none}
+.chip.on{background:var(--pill);color:var(--pillfg);border-color:transparent}
+.conf-low{color:var(--danger)}.conf-mid{color:var(--gold)}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--glass2);border:1px solid var(--line);padding:.8rem 1rem;border-radius:14px;font:.84rem/1.5 var(--sans);color:var(--fg2)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1rem;font-size:.86rem;margin:.6rem 0}.kv span{color:var(--muted)}.kv b{font-weight:500}
+/* shell */
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:100%}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px);margin:14px 0 14px 14px;height:calc(100vh - 28px);border-radius:26px;padding:1rem .7rem;display:flex;flex-direction:column;gap:.15rem}
+.brand{font:400 1.55rem/1 var(--serif);padding:.3rem .6rem 1rem;letter-spacing:-.01em}.brand em{font-style:italic;color:var(--gold)}
+.me{display:flex;align-items:center;gap:.55rem;padding:.45rem .5rem;margin:0 0 .8rem;border-radius:16px;background:var(--glass2);border:1px solid var(--gline);text-decoration:none}
+.me img,.me .av{display:block;flex:none;width:30px;height:30px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--gold2),var(--gold))}
+.me span{flex:1;font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan{font:500 .7rem var(--sans);padding:.15rem .5rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);color:var(--gold)}
+.side a.nav{display:flex;align-items:center;gap:.65rem;padding:.55rem .7rem;border-radius:14px;text-decoration:none;color:var(--fg2);font-size:.92rem}
+.side a.nav:hover{background:var(--glass2)}
+.side a.nav.on{background:var(--glass2);color:var(--fg);box-shadow:inset 0 1px 0 var(--hi),0 0 0 1px var(--gline)}
+.side a.nav svg{width:18px;height:18px;flex:none;opacity:.8}
+.theme{display:flex;gap:.15rem;padding:.2rem;margin:.3rem 0;border-radius:999px;background:var(--glass2);border:1px solid var(--gline)}.theme button{flex:1;border:0;background:none;color:var(--muted);font:500 .72rem var(--sans);padding:.35rem .2rem;border-radius:999px;cursor:pointer}.theme button.on{background:var(--pill);color:var(--pillfg)}
+.side-sub{margin-top:auto;display:flex;flex-direction:column;gap:.1rem;padding-top:.6rem;border-top:1px solid var(--line)}
+.main{padding:2rem 2.2rem 3rem;max-width:1180px;width:100%;min-width:0}
+@media (max-width:760px){
+ .shell{grid-template-columns:1fr}
+ .side{position:fixed;top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:10px;right:10px;margin:0;height:auto;flex-direction:row;justify-content:space-around;padding:.35rem;border-radius:999px;z-index:5}
+ .brand,.side-sub,.me{display:none}
+ .main>*{animation:none}
+ .side a.nav{flex-direction:column;gap:.15rem;font-size:.68rem;padding:.4rem .5rem;border-radius:999px}
+ .main{padding:1.2rem 1rem 6.5rem}
+}
+/* builder */
+.builder{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:1.6rem;align-items:start}
+.builder .pv{position:sticky;top:1.4rem}
+@media (max-width:760px){.builder{grid-template-columns:1fr}.builder .pv{position:static}.builder .gl-card{min-height:440px}}
+ol.steps{list-style:none;padding:0;margin:0 0 1rem;display:flex;flex-wrap:wrap;gap:.3rem}
+ol.steps li a{display:inline-block;padding:.35rem .75rem;border-radius:999px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--line);background:var(--glass)}
+ol.steps li.on a{background:var(--pill);color:var(--pillfg);border-color:transparent}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:.5rem}
+.swatch{height:92px;border-radius:14px;border:1px solid var(--gline);cursor:pointer;display:flex;align-items:flex-end;padding:.35rem .45rem;font:500 .7rem var(--sans);color:#fff;text-shadow:0 1px 2px #000;transition:transform .15s}
+.swatch:hover{transform:translateY(-2px)}.swatch.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--gold)}
+.drag{padding:0}.drag li{list-style:none;border:1px solid var(--line);border-radius:14px;padding:.6rem .8rem;margin:.4rem 0;background:var(--glass2)}
+/* receiver card */
+.gl-card{position:relative;overflow:hidden;width:100%;max-width:380px;min-height:600px;border-radius:32px;color:#fff;margin:0 auto;--amp:1;isolation:isolate;box-shadow:0 30px 70px -30px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08) inset}
+.gl-card.int-med{--amp:2}
+.pv .gl-card,.cardstage .gl-card{transition:transform .25s ease-out;transform-style:preserve-3d}
+.gl-sheen{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(260px circle at var(--sx,30%) var(--sy,20%),rgba(255,255,255,.22),transparent 60%),linear-gradient(115deg,rgba(255,255,255,.08),transparent 40%);mix-blend-mode:screen}
+.gl-pw{position:relative;width:116px;height:116px;border-radius:22px;isolation:isolate}.gl-pw.circle{border-radius:50%}
+.gl-pw .gl-photo{position:relative;z-index:1;width:100%;height:100%}
+.pe-halo::before{content:"";position:absolute;inset:-9px;border-radius:inherit;background:conic-gradient(from 0deg,#f2d38b,#a8854a,#fff3cf,#a8854a,#f2d38b);filter:blur(6px);opacity:.85;animation:spin 6s linear infinite;z-index:0}
+.pe-glass::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:2;background:linear-gradient(135deg,rgba(255,255,255,.45),transparent 45%,transparent 60%,rgba(255,255,255,.18));box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),inset 0 -8px 20px rgba(255,255,255,.12);pointer-events:none}
+.pe-glass{transform:translateZ(30px)}
+.pe-float{animation:floaty 5s ease-in-out infinite}.pe-float .gl-photo{box-shadow:0 26px 36px -16px rgba(0,0,0,.7)}
+.pe-shimmer::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:2;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);background-size:250% 100%;animation:sheen 3.6s ease-in-out infinite;pointer-events:none}
+.pe-orbit::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(255,255,255,.35);border-top-color:#f2d38b;border-right-color:transparent;animation:spin 4s linear infinite;z-index:2;pointer-events:none}.pe-orbit::after{content:"";position:absolute;inset:-22px;border-radius:50%;border:1px dashed rgba(255,255,255,.18);animation:spin 14s linear infinite reverse;z-index:0}
+.pe-mono .gl-photo{filter:grayscale(1) contrast(1.15)}.pe-mono{box-shadow:0 0 0 2px #f2d38b,0 0 30px -6px #f2d38b}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes sheen{0%{background-position:150% 0}60%,100%{background-position:-150% 0}}
+.gl-bg{position:absolute;inset:-8%;z-index:-2;background-size:cover;background-position:center}
+.gl-bg video{width:100%;height:100%;object-fit:cover;display:block}
+.gl-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.5))}
+.gl-content{padding:34px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.gl-photo{width:116px;height:116px;object-fit:cover;border:1px solid rgba(255,255,255,.5);border-radius:22px;background:rgba(255,255,255,.18);box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}
+.gl-photo.circle{border-radius:50%}
+.gl-name{font:400 2rem/1.05 var(--serif);text-align:center;margin-top:.4rem}
+.gl-sub{opacity:.85;text-align:center;font-size:.9rem}
+.gl-rows{width:100%;margin-top:.8rem;display:flex;flex-direction:column;gap:7px}
+.gl-row{display:flex;justify-content:space-between;gap:.6rem;padding:.7rem .9rem;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);border-radius:16px;text-decoration:none;color:#fff;font-size:.88rem;word-break:break-all;text-shadow:none}
+.gl-row span:first-child{opacity:.7;white-space:nowrap}
+.gl-btns{width:100%;display:flex;flex-direction:column;gap:8px;margin-top:.8rem}
+.gl-btn{display:block;text-align:center;padding:.85rem;border-radius:999px;background:rgba(255,255,255,.94);color:#111;text-decoration:none;border:0;font:600 .92rem var(--sans);cursor:pointer;text-shadow:none;box-shadow:0 8px 20px -10px rgba(0,0,0,.5)}
+.gl-btns .gl-btn+.gl-btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.gl-foot{margin-top:1rem;font-size:.72rem;opacity:.75;color:#fff}
+.fx-ready.fx-drift .gl-bg{animation:gldrift calc(22s / var(--amp)) ease-in-out infinite alternate}
+@keyframes gldrift{from{transform:translate(0,0) scale(1.04)}to{transform:translate(calc(-2.5% * var(--amp)),calc(-2% * var(--amp))) scale(calc(1.06 + .02 * var(--amp)))}}
+.fx-ready.fx-pulse .gl-bg{animation:glpulse 6s ease-in-out infinite}
+@keyframes glpulse{0%,100%{transform:scale(1.02);filter:brightness(1)}50%{transform:scale(calc(1.02 + .025 * var(--amp)));filter:brightness(calc(1 + .07 * var(--amp)))}}
+.fx-ready.fx-tilt .gl-bg{transform:translate(var(--tx,0px),var(--ty,0px)) scale(1.08);transition:transform .25s ease-out}
+.fx-ready.fx-portrait .gl-pw{animation:glportrait 5s ease-in-out infinite}
+@keyframes glportrait{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(calc(1 + .015 * var(--amp))) rotate(calc(.6deg * var(--amp)))}}
+/* public */
+.pub{max-width:430px;margin:0 auto;padding:1.2rem}
+.pubbar{font-size:.78rem;color:var(--muted);padding:.6rem 1.2rem;display:flex;justify-content:space-between;gap:.5rem}
+.qrcard{background:#fff;color:#111;border-radius:26px;padding:1.4rem;text-align:center;max-width:360px;margin:0 auto;box-shadow:0 20px 50px -24px rgba(0,0,0,.45)}
+.qrcard h2{font:400 1.8rem/1.1 var(--serif)}
+.qrcard img.ph{width:96px;height:96px;border-radius:50%;object-fit:cover}
+.qr{display:inline-block;background:#fff;padding:10px;border-radius:14px}.qr img,.qr canvas{display:block;max-width:100%;height:auto}
+.intake label{margin:.7rem 0}
+/* auth */
+.authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.2rem}
+.auth{width:100%;max-width:410px;border-radius:30px;padding:2rem 1.8rem 1.6rem}
+.auth .mark{font:400 2.6rem/1 var(--serif);text-align:center;margin:0 0 .3rem}.auth .mark em{color:var(--gold)}
+.auth .lede{text-align:center;color:var(--muted);margin:0 0 1.4rem;font-size:.9rem}
+.auth .oauth{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.2rem 0 1rem}.auth .oauth .btn{justify-content:center;margin:0}
+.auth .or{display:flex;align-items:center;gap:.8rem;color:var(--muted);font-size:.8rem;margin:.4rem 0}.auth .or::before,.auth .or::after{content:"";flex:1;height:1px;background:var(--line)}
+.auth .btn.primary{width:100%;justify-content:center;padding:.8rem;margin-top:.6rem}
+.auth input[type=password]:focus{border-color:transparent;box-shadow:0 0 0 1.5px var(--gold),0 0 0 5px color-mix(in srgb,var(--gold) 12%,transparent),0 0 30px -4px var(--glow2)}
+.auth .foot{text-align:center;font-size:.85rem;color:var(--muted);margin-top:1.1rem}
+/* modal + popover */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:20;padding:1rem}
+.mbox{border-radius:26px;padding:1.5rem;max-width:580px;width:100%;max-height:90vh;overflow:auto;background:var(--bg2)}
+.mbox.full{max-width:none;height:100%;max-height:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;color:#111}
+.pop{position:fixed;z-index:25;width:min(300px,calc(100vw - 24px));max-height:min(70vh,520px);overflow:auto;border-radius:20px;padding:.8rem;background:color-mix(in srgb,var(--bg2) 82%,transparent);animation:popin .16s ease-out}
+@keyframes popin{from{opacity:0;transform:translateY(-4px) scale(.98)}}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;margin:.1rem .2rem .6rem}
+.plist{display:flex;flex-direction:column;margin:.5rem 0}
+.pitem{display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;border-radius:10px;margin:0;color:var(--fg);cursor:pointer;font-size:.88rem}.pitem:hover{background:var(--glass2)}.pitem span:nth-child(2){flex:1}
+.pin{width:100%;margin:.3rem 0}.pfoot{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--line)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(5.5rem + env(safe-area-inset-bottom,0px));background:var(--pill);color:var(--pillfg);padding:.6rem 1.1rem;border-radius:999px;z-index:30;display:none;max-width:90vw;font-size:.88rem;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+/* contacts */
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin-bottom:.4rem}
+.search{flex:1;min-width:220px;border-radius:999px;padding:.65rem 1.1rem}
+.ctable{background:var(--glass);border:1px solid var(--gline);border-radius:22px;box-shadow:var(--shadow),inset 0 1px 0 var(--hi);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}
+.ctable table{min-width:900px}.ctable td{max-width:260px}.ctable th{position:sticky;top:0;background:color-mix(in srgb,var(--bg2) 70%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:.35rem .35rem}
+.ctable tr:last-child td{border-bottom:0}
+.ck{width:36px;text-align:center}
+.colh{display:inline-flex;align-items:center;gap:.35rem;background:none;border:0;padding:.35rem .55rem;border-radius:999px;font:500 .8rem var(--sans);color:var(--muted);cursor:pointer;white-space:nowrap}
+.colh:hover{background:var(--glass2);color:var(--fg)}.colh.on{background:var(--pill);color:var(--pillfg)}
+.caret{width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.6}
+.cell{cursor:pointer;min-width:90px}.cell:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 40%,transparent);border-radius:10px}.cell.ro{cursor:default;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cell.ro:hover{box-shadow:none}
+.empty{color:var(--muted);opacity:0}.cell:hover .empty{opacity:.7}
+.ctable td:nth-child(2){white-space:nowrap}.cname{font-weight:500;text-decoration:none}.cname:hover{text-decoration:underline}
+.stars{color:var(--gold);letter-spacing:.05em;white-space:nowrap}
+.empty-state{padding:2.5rem;text-align:center}
+.fm .fmname{font:500 1rem var(--sans);min-width:200px;flex:0 1 260px}
+.opts{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}.optrow{display:inline-flex;align-items:center;gap:.35rem;background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:.15rem .6rem .15rem .2rem}.optrow input{border:0;background:none;padding:.3rem .5rem;width:130px}
+.fld{margin:.55rem 0}.fld.wide{grid-column:1/-1}.flab{display:block;font-size:.85rem;color:var(--fg2);margin-bottom:.3rem}
+ul.queue{list-style:none;padding:0;margin:.6rem 0}ul.queue li{display:flex;align-items:center;gap:.6rem;padding:.45rem .2rem;border-bottom:1px solid var(--line);flex-wrap:wrap}ul.queue li.done{opacity:.45}ul.queue li.done span:first-child{text-decoration:line-through}
+ul.act{list-style:none;padding:0;margin:0}ul.act li{display:flex;align-items:center;gap:.6rem;padding:.55rem .2rem;border-bottom:1px solid var(--line);flex-wrap:wrap}ul.act li:last-child{border-bottom:0}
+.cfrow{margin:.4rem 0}.cfrow input,.cfrow select{margin:0}
+details summary{cursor:pointer;color:var(--fg2);font-size:.9rem;margin:.4rem 0}
+.hero-h{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.aura::before,.aura::after,.pop{animation:none!important}.gl-card .gl-bg,.gl-card .gl-photo,.gl-pw,.gl-pw::before,.gl-pw::after,.main>*,.aura b,.aura s{animation:none!important;transform:none!important;transition:none!important}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="aura" aria-hidden="true"><b></b><s></s><i></i></div>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+/* ============ CORE ============ */
+const KEY='goldex_proto_v1';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rid=(n=8)=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let s='';for(const x of crypto.getRandomValues(new Uint8Array(n)))s+=a[x%a.length];return s};
+const nowISO=()=>new Date().toISOString();
+const dstr=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const todayStr=()=>dstr(new Date());
+const addDays=n=>dstr(Date.now()+n*864e5);
+const agoISO=(mins)=>new Date(Date.now()-mins*6e4).toISOString();
+const fmtDT=iso=>iso?new Date(iso).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+const fmtD=s=>s?new Date(s+'T12:00').toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}):'';
+const money=n=>'$'+Number(n).toFixed(2);
+const digits=s=>String(s||'').replace(/\D/g,'').slice(-10);
+const slugify=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+const firstName=n=>String(n||'').trim().split(/\s+/)[0]||'';
+const titleCase=s=>String(s||'').toLowerCase().replace(/\b([a-z])/g,m=>m.toUpperCase());
+const approxCity=()=>{try{return(Intl.DateTimeFormat().resolvedOptions().timeZone||'').split('/').pop().replace(/_/g,' ')}catch(e){return''}};
+const opt=(v,l,sel)=>`<option value="${esc(v)}" ${String(sel)===String(v)?'selected':''}>${esc(l??v)}</option>`;
+
+const PRESETS=[
+ ['p1','Graphite','linear-gradient(160deg,#2a2a2a,#6e6e6e)'],['p2','Midnight','linear-gradient(160deg,#0f1c3f,#3a4f8a)'],
+ ['p3','Ember','linear-gradient(160deg,#4a1208,#c2551f)'],['p4','Forest','linear-gradient(160deg,#0f2e1f,#3f7a55)'],
+ ['p5','Gold dust','linear-gradient(160deg,#3b2c06,#b8902f)'],['p6','Plum','linear-gradient(160deg,#2c0f33,#7b3f8c)'],
+ ['p7','Ocean','linear-gradient(160deg,#04303b,#1f8aa0)'],['p8','Sand','linear-gradient(160deg,#6d5a43,#bfa988)'],
+ ['p9','Crimson','linear-gradient(160deg,#3a0610,#b0233b)'],['p10','Steel','linear-gradient(160deg,#1d2530,#7d8a99)'],
+ ['p11','Dusk','linear-gradient(200deg,#1a1333,#6b3d5e 60%,#c07a4f)'],['p12','Noir grid','repeating-linear-gradient(45deg,#111 0 14px,#1d1d1d 14px 28px)']
+].map(([id,name,url])=>({id,name,type:'gradient',url,is_preset:true}));
+const ROLES_DEFAULT=['investor','photographer','videographer','founder','brand/sponsor','media/press','speaker','creator','agency','event organizer','other'];
+const FIELDS=[['name','Name'],['title','Title'],['company','Company'],['phone','Phone'],['email','Email'],['website','Website'],['booking','Booking link'],['instagram','Instagram'],['x','X'],['linkedin','LinkedIn'],['tiktok','TikTok'],['youtube','YouTube'],['custom','Custom links']];
+const TYPE_DEFAULTS={'Full Contact':['name','title','company','phone','email','website','booking','instagram','x','linkedin','tiktok','youtube','custom'],'Public':['name','title','company','website','instagram','x','linkedin','tiktok','youtube','custom'],'Event':['name','title','company','email','linkedin','instagram']};
+const PRICES={5:24.99,10:39.99,25:79.99,50:129.99};
+const TRIGGERS={daily_followup:'Daily follow-up (new intake contacts)',birthday:'Birthday',event_update:'Event update',reengage:'90-day re-engage (Gold tier)',trip:'Trip alert (city)'};
+
+/* ============ STORE ============ */
+let DB;
+function loadDB(){try{const r=localStorage.getItem(KEY)||localStorage.getItem('goldlist_proto_v1');return r?JSON.parse(r):null}catch(e){return null}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast('Browser storage is full or blocked. Recent changes will not survive a reload.')}}
+function me(){return DB.users.find(u=>u.id===DB.session?.userId)}
+const mine=col=>{const u=me();return u?DB[col].filter(x=>x.user_id===u.id):[]};
+const byId=(col,id)=>DB[col].find(x=>x.id===id);
+function limits(u){const p=u?.plan||'free';if(p==='free')return{name:'Free',cards:1,events:1,contacts:100,uploads:false,effects:false,ai:false,automations:false,footer:true,jevCap:50};return{name:{pro:'Pro',events:'Events',founding:'Founding Member'}[p],cards:Infinity,events:Infinity,contacts:5000,uploads:true,effects:true,ai:true,automations:true,footer:false,jevCap:p==='events'?3000:1000}}
+function newUser(o){return Object.assign({id:'u_'+rid(),name:'',email:'',password:'',alt:[],phone:'',plan:'free',created_at:nowISO(),title:'',company:'',website:'',booking:'',instagram:'',x:'',linkedin:'',tiktok:'',youtube:'',photo:'',onboarded:false,username:'',custom_fields:[],credits:{portrait:0,sms:0},jev:{used:0,month:todayStr().slice(0,7)},cfields:DEFAULT_CFIELDS(),settings:{email:{fromName:'',replyTo:'',bcc:true},linkBase:'https://goldex.link',notif:{scans:true,submissions:true,orders:true,digest:false},connected:{google_contacts:false,google_sheets:false},smsReg:'not_started'}},o)}
+function defaultButtons(type){return[{id:rid(5),kind:'intake',label:'Tell me who you are',url:'',on:type==='Event'},{id:rid(5),kind:'book',label:'Book a call',url:'',on:false},{id:rid(5),kind:'website',label:'Visit website',url:'',on:false},{id:rid(5),kind:'custom',label:'',url:'',on:false}]}
+function newCard(u,o={}){const type=o.type||'Full Contact';return Object.assign({id:'c_'+rid(),user_id:u.id,name:'My card',type,slug:'',photo_url:u.photo||'',photo_shape:'circle',photo_effect:'none',overrides:{},bg:{kind:'preset',id:'p1'},dynamic:false,background_effect:'drift',effect_intensity:'low',portrait:{generated:false,approved:false},fields_shown:[...(TYPE_DEFAULTS[type]||TYPE_DEFAULTS['Full Contact'])],custom_links:[],buttons:defaultButtons(type),intake_form_id:'',status:'draft',created_at:nowISO()},o)}
+function newForm(u,ev){return{id:'f_'+rid(),user_id:u.id,event_id:ev?ev.id:'',event_checkbox_label:ev?`I'm at ${ev.name}`:'',role_options:[...ROLES_DEFAULT],ask_phone:true,ask_email:true,note_prompt:'Leave a note for [Name]',consent_label:'OK to send me a follow-up by text or email'}}
+function uniqueSlug(u,base,exceptId){let s=slugify(base)||'card',i=2;const taken=x=>DB.cards.some(c=>c.user_id===u.id&&c.slug===x&&c.id!==exceptId);let out=s;while(taken(out))out=s+'-'+i++;return out}
+
+function seed(){
+ const u=newUser({id:'u_amechi',name:'B. Amechi',email:'amechi@addcolormedia.com',password:'VANTA',alt:['vanta'],plan:'pro',title:'Co-Founder',company:'High Lvl Media',username:'amechi',credits:{portrait:3,sms:500}});
+ u.fields_note='';
+ const d={users:[u],session:null,cards:[],uploads:[],events:[],forms:[],submissions:[],contacts:[],tags:[],orders:[],messages:[],automations:[],templates:[],scans:[],replies:[],seeded:true};
+ DB=d;
+ const c1=newCard(u,{name:'Main card',slug:'main',status:'live',bg:{kind:'preset',id:'p5'},dynamic:true,background_effect:'drift'});
+ c1.fields_shown=['name','title','company','email','website','instagram','custom'];
+ const ev={id:'e_demo',user_id:u.id,name:'High Lvl Summit (demo)',start_date:addDays(-1),end_date:addDays(1),city:'Atlanta',venue:'Demo venue',card_ids:[],intake_form_id:'',status:'active'};
+ const f=newForm(u,ev);ev.intake_form_id=f.id;
+ const c2=newCard(u,{name:'Summit card',type:'Event',slug:'summit',status:'live',bg:{kind:'preset',id:'p2'},intake_form_id:f.id});
+ ev.card_ids=[c2.id];
+ const ev2={id:'e_'+rid(),user_id:u.id,name:'Austin Conference (demo)',start_date:addDays(20),end_date:addDays(22),city:'Austin',venue:'',card_ids:[c1.id],intake_form_id:'',status:'active'};
+ d.cards.push(c1,c2);d.events.push(ev,ev2);d.forms.push(f);
+ const P=[['Jordan Hale','Atlanta','GA',['investor'],5,'$$$','Gold','granted','intake'],['Maya Brooks','Atlanta','GA',['photographer'],4,'$$','Silver','granted','intake'],['Andre Cole','New York','NY',['founder'],4,'$$','Gold','none','import'],['Tasha Reed','Los Angeles','CA',['videographer','creator'],3,'$','Silver','none','import'],['Omar Diallo','Atlanta','GA',['brand/sponsor'],5,'$$$','Gold','granted','manual'],['Kira Nwosu','Houston','TX',['media/press'],3,'$$','Bronze','none','import'],['Leon Price','Austin','TX',['speaker'],4,'$$','Silver','granted','intake'],['Nia Grant','Atlanta','GA',['agency'],2,'$','Bronze','none','import']];
+ P.forEach((p,i)=>{const c={id:'k_'+rid(),user_id:u.id,name:p[0],phone:'555010'+String(i).padStart(4,'0'),email:p[0].toLowerCase().replace(/\s+/g,'.')+'@example.com',socials:'',website:'',city:p[1],state:p[2],roles:p[3],events_met:p[8]==='intake'&&p[1]==='Atlanta'?[ev.id]:[],rating:p[4],cost_tier:p[5],relationship_tier:p[6],birthday:i===1?todayStr().replace(/^\d{4}/,'1992'):'',notes:'',source:p[8],consent_status:p[7],consent_timestamp:p[7]==='granted'?agoISO(60*(i+1)):'',created_at:agoISO(i<2?30+i*40:60*24*(i+2)),intake_note:'',review:null,jev:null};d.contacts.push(c)});
+ const CO=['Hale Ventures','','Cole Labs','','Diallo Brands','Signal Media','','Grant Agency'],CU=['','Customer','Lead','','Repeat customer','','Customer',''];d.contacts.forEach((c,i)=>{c.company=CO[i]||'';c.customer=CU[i]||''});d.contacts[2].roles.push('investor');
+ d.contacts[0].intake_note='Looking to invest in media projects this year';d.contacts[1].intake_note='Would love to shoot the next event';
+ d.contacts.slice(0,2).forEach((c,i)=>d.submissions.push({id:'s_'+rid(),card_id:c2.id,event_id:ev.id,contact_id:c.id,name:c.name,phone:c.phone,email:c.email,roles:c.roles,note:c.intake_note,consent:true,consent_timestamp:c.consent_timestamp,created_at:c.created_at}));
+ d.contacts.push({id:'k_'+rid(),user_id:u.id,name:'Chris ATL Photog',phone:'5550109999',email:'',socials:'',website:'',city:'',state:'',roles:[],events_met:[],rating:0,cost_tier:'',relationship_tier:'',birthday:'',notes:'',source:'import',consent_status:'none',consent_timestamp:'',created_at:agoISO(60*30),intake_note:'',review:{reason:'Name looks like it contains a role and city. Suggested: name "Chris", city Atlanta GA, role photographer.',suggest:{name:'Chris',city:'Atlanta',state:'GA',roles:['photographer']},conf:.55},jev:null});
+ const t1={id:rid(5),user_id:u.id,order_id:'',uid:'',label:'Badge sticker',points_to:{kind:'card',id:c1.id},status:'active',scan_count:0,last_scan_at:'',source:'own'};
+ d.tags.push(t1);
+ const o={id:'GL-10231',user_id:u.id,product:'NFC stickers',color:'black',quantity:5,price:PRICES[5],shipping_address:{name:'B. Amechi',line1:'Demo address',city:'Los Angeles',state:'CA',zip:'90001'},vendor:'Pending vendor selection',vendor_order_ref:'',tracking_number:'',status:'ordered',created_at:agoISO(60*24*2),est_delivery:addDays(8)};
+ d.orders.push(o);for(let i=0;i<5;i++)d.tags.push({id:rid(5),user_id:u.id,order_id:o.id,uid:'',label:'',points_to:{kind:'event',id:ev.id},status:'ordered',scan_count:0,last_scan_at:'',source:'order',color:'black'});
+ const src=['nfc','qr','link','qr','link','nfc','qr'];src.forEach((s,i)=>d.scans.push({id:rid(),tag_id:s==='nfc'?t1.id:'',card_id:i%2?c2.id:c1.id,event_id:i%2?ev.id:'',source:s,timestamp:agoISO(15+i*50),city:'Atlanta'}));
+ t1.scan_count=2;t1.last_scan_at=agoISO(15);
+ d.templates.push({id:'tp1',user_id:u.id,name:'Event follow-up',channel:'sms',subject:'',body:'Hey {first_name}, great meeting you at {event}. Here is my card: {card_link}'},{id:'tp2',user_id:u.id,name:'Intro email',channel:'email',subject:'Great connecting, {first_name}',body:'Hi {first_name},\n\nThanks for the note: "{note}". Let us set up time. My card: {card_link}\n\nB. Amechi'},{id:'tp3',user_id:u.id,name:'Birthday',channel:'sms',subject:'',body:'Happy birthday {first_name}. Wishing you a high level year.'});
+ d.automations.push({id:'a1',user_id:u.id,trigger:'daily_followup',filter:{},template_id:'tp1',send_time:'18:00',active:true},{id:'a2',user_id:u.id,trigger:'birthday',filter:{},template_id:'tp3',send_time:'09:00',active:false});
+ return d;
+}
+
+/* ============ MEDIA (IndexedDB for video) ============ */
+const IDB={db:null,urls:new Map(),
+ open(){return new Promise(res=>{try{const r=indexedDB.open('goldex_media',1);r.onupgradeneeded=()=>r.result.createObjectStore('m');r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>res()}catch(e){res()}})},
+ put(id,blob){return new Promise((res,rej)=>{if(!this.db)return rej(new Error('Video storage unavailable in this browser'));const t=this.db.transaction('m','readwrite');t.objectStore('m').put(blob,id);t.oncomplete=()=>{this.urls.set(id,URL.createObjectURL(blob));res()};t.onerror=()=>rej(t.error)})},
+ url(id){if(this.urls.has(id))return Promise.resolve(this.urls.get(id));if(!this.db)return Promise.resolve(null);return new Promise(res=>{try{const r=this.db.transaction('m').objectStore('m').get(id);r.onsuccess=()=>{if(r.result){const u=URL.createObjectURL(r.result);this.urls.set(id,u);res(u)}else res(null)};r.onerror=()=>res(null)}catch(e){res(null)}})}
+};
+function readImage(file,max=1080,square=false){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{let sx=0,sy=0,sw=img.width,sh=img.height;if(square){const m=Math.min(sw,sh);sx=(sw-m)/2;sy=(sh-m)/2;sw=sh=m}const sc=Math.min(1,max/Math.max(sw,sh));const c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};img.onerror=()=>rej(new Error('Could not read image'));img.src=fr.result};fr.onerror=()=>rej(fr.error);fr.readAsDataURL(file)})}
+const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});
+const canvasBlob=c=>new Promise(r=>c.toBlob(r,'image/png'));
+function videoDuration(file){return new Promise(res=>{const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{res(v.duration);URL.revokeObjectURL(v.src)};v.onerror=()=>res(NaN);v.src=URL.createObjectURL(file)})}
+
+/* ============ DOWNLOADS ============ */
+let DL=null;
+(async()=>{try{if(window.claude&&window.claude.use)DL=await window.claude.use('downloads')}catch(e){}})();
+async function saveFile(filename,data){
+ if(DL){try{await DL.save({filename,data});return true}catch(e){if(e&&e.code==='declined')return false;if(!['rejected_extension','unavailable','not_granted','capability_disabled','capability_removed','extension_not_enabled'].includes(e&&e.code)){toast('Download failed: '+((e&&e.message)||'unknown'));return false}}}
+ try{const blob=data instanceof Blob?data:new Blob([data]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();return true}catch(e){toast('Downloads are not available in this view.');return false}
+}
+function csvOf(rows){return rows.map(r=>r.map(v=>{v=Array.isArray(v)?v.join('; '):String(v??'');return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n')}
+function parseCSV(text){const rows=[];let r=[],f='',q=false;for(let i=0;i<text.length;i++){const ch=text[i];if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}else{if(ch==='"')q=true;else if(ch===','){r.push(f);f=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;r.push(f);rows.push(r);r=[];f=''}else f+=ch}}if(f||r.length){r.push(f);rows.push(r)}return rows.filter(x=>x.some(v=>v.trim()))}
+
+/* ============ QR ============ */
+function qrInto(el,text,size){el.innerHTML='';if(!window.QRCode){el.textContent='QR library did not load.';return}new QRCode(el,{text,width:size,height:size,correctLevel:QRCode.CorrectLevel.M})}
+function qrDataURL(text,size=800){const d=document.createElement('div');new QRCode(d,{text,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});return d.querySelector('canvas').toDataURL('image/png')}
+
+/* ============ LINKS / URLS ============ */
+const base=u=>((u&&u.settings&&u.settings.linkBase)||'https://goldex.link').replace(/\/$/,'');
+const owner=card=>byId('users',card.user_id)||{};
+const cv=(card,k)=>{const o=card.overrides||{};return o[k]!==undefined?o[k]:(owner(card)[k]??'')};
+const cardUrl=card=>`${base(owner(card))}/${owner(card).username}/${card.slug||'(slug)'}`;
+const cardHash=(card,src)=>`#/p/${owner(card).username}/${card.slug}${src?'?src='+src:''}`;
+const tagUrl=tag=>`${base(byId('users',tag.user_id))}/t/${tag.id}`;
+function linkFor(k,v){if(!v)return'';const isUrl=/^https?:\/\//i.test(v),h=String(v).replace(/^@/,'');switch(k){case'phone':return'tel:'+String(v).replace(/[^\d+]/g,'');case'email':return'mailto:'+v;case'instagram':return isUrl?v:'https://instagram.com/'+h;case'x':return isUrl?v:'https://x.com/'+h;case'linkedin':return isUrl?v:'https://linkedin.com/in/'+h;case'tiktok':return isUrl?v:'https://tiktok.com/@'+h;case'youtube':return isUrl?v:'https://youtube.com/@'+h;default:return isUrl?v:'https://'+v}}
+const safeUrl=u=>/^(https?:|mailto:|tel:)/i.test(u||'')?u:(u?'https://'+u:'#');
+
+/* ============ DOMAIN HELPERS ============ */
+function eventStatus(e){const t=todayStr();if(t<e.start_date)return'upcoming';if(t>(e.end_date||e.start_date))return'past';return'live'}
+function cardDest(tag){const p=tag.points_to||{};if(p.kind==='card')return byId('cards',p.id);if(p.kind==='event'){const e=byId('events',p.id);return e&&e.card_ids.length?byId('cards',e.card_ids[0]):null}return null}
+function destLabel(p){if(!p||!p.id)return'Not set';if(p.kind==='card'){const c=byId('cards',p.id);return c?'Card: '+c.name:'Missing card'}const e=byId('events',p.id);return e?'Event: '+e.name:'Missing event'}
+function logScan(o){const s={id:rid(),tag_id:o.tag_id||'',card_id:o.card_id||'',event_id:o.event_id||'',source:o.source||'link',timestamp:nowISO(),city:approxCity()};DB.scans.push(s);persist();return s}
+function scansForCard(id){return DB.scans.filter(s=>s.card_id===id)}
+function myScans(){const cs=new Set(mine('cards').map(c=>c.id));return DB.scans.filter(s=>cs.has(s.card_id))}
+function mySubs(){const cs=new Set(mine('cards').map(c=>c.id));return DB.submissions.filter(s=>cs.has(s.card_id))}
+function lastMessageTo(cid){return DB.messages.filter(m=>m.status==='sent'&&m.recipients.includes(cid)).map(m=>m.sent_at).sort().pop()||''}
+function pendingFollowups(){return mine('contacts').filter(c=>c.source==='intake'&&c.consent_status==='granted'&&!(lastMessageTo(c.id)>c.created_at))}
+function mainCard(u){return DB.cards.find(c=>c.user_id===u.id&&c.status==='live')}
+function jevTick(n=1){const u=me();if(!u)return true;const m=todayStr().slice(0,7);if(u.jev.month!==m)u.jev={used:0,month:m};const cap=limits(u).jevCap;if(u.jev.used+n>cap){toast('Monthly Jev cap reached for this plan. Items go to the review queue.');return false}u.jev.used+=n;return true}
+
+/* ============ JEV (rule-based stand-in for the Jev decision layer) ============ */
+const JEV={
+ roles:{investor:['investor','invest','vc','angel','capital','ventures','fund'],photographer:['photographer','photog','photo','photography'],videographer:['videographer','video','filmmaker','cinematographer','editor','dp'],founder:['founder','cofounder','co-founder','ceo','owner'],'brand/sponsor':['brand','sponsor','sponsorship','marketing'],'media/press':['press','media','journalist','reporter','podcast','news','blogger'],speaker:['speaker','keynote','panelist'],creator:['creator','influencer','youtuber','tiktoker','content'],agency:['agency'],'event organizer':['organizer','promoter','planner','events']},
+ cities:{atl:['Atlanta','GA'],atlanta:['Atlanta','GA'],nyc:['New York','NY'],ny:['New York','NY'],bk:['Brooklyn','NY'],bklyn:['Brooklyn','NY'],brooklyn:['Brooklyn','NY'],la:['Los Angeles','CA'],lax:['Los Angeles','CA'],chi:['Chicago','IL'],chicago:['Chicago','IL'],dc:['Washington','DC'],hou:['Houston','TX'],houston:['Houston','TX'],dal:['Dallas','TX'],dallas:['Dallas','TX'],atx:['Austin','TX'],austin:['Austin','TX'],mia:['Miami','FL'],miami:['Miami','FL'],oak:['Oakland','CA'],oakland:['Oakland','CA'],sf:['San Francisco','CA'],det:['Detroit','MI'],detroit:['Detroit','MI'],philly:['Philadelphia','PA'],phl:['Philadelphia','PA'],clt:['Charlotte','NC'],charlotte:['Charlotte','NC'],nola:['New Orleans','LA'],lagos:['Lagos',''],london:['London',''],accra:['Accra',''],addis:['Addis Ababa','']},
+ biz:['llc','inc','inc.','co','co.','corp','studio','studios','pizza','salon','barber','barbershop','restaurant','cafe','café','shop','group','realty','auto','dental','clinic','grill','kitchen','agency','llp','store','bank','insurance'],
+ gate(c){return c>=.85?'act':c>=.6?'ask':'review'},
+ parseName(raw){const orig=String(raw||'').trim();let s=orig.replace(/[()\[\]|,/]+/g,' ').replace(/\s[-–]\s/g,' ').replace(/\s+/g,' ').trim();const toks=s.split(' ');const keep=[],roles=new Set();let city='',state='',hits=0,abbrev=false;
+  for(const t of toks){const l=t.toLowerCase().replace(/[.:]$/,'');let used=false;if(['mgr','manager','mngr','dir','director','the','at','from'].includes(l)){hits++;continue}for(const[r,kw]of Object.entries(this.roles)){if(kw.includes(l)){roles.add(r);used=true;hits++;if(l.length<=3||['photo','video','invest'].includes(l))abbrev=true}}if(!used&&this.cities[l]&&!city){[city,state]=this.cities[l];used=true;hits++;if(l.length<=3)abbrev=true}if(!used)keep.push(t)}
+  const low=orig.toLowerCase();const isBiz=this.biz.some(b=>low.split(/\s+/).includes(b))||/^[a-z]+'s\b/i.test(orig);
+  const name=isBiz?orig:titleCase(keep.join(' '));const words=keep.length;let conf=.95;
+  if(isBiz)conf=.7;else if(!words)conf=.3;else if(words===1)conf=hits?.62:.7;else if(words>3)conf=.5;else if(hits)conf=abbrev?.78:.88;
+  if(/\d/.test(keep.join('')))conf=Math.min(conf,.5);
+  return{name:name||orig,city,state,roles:[...roles],isBusiness:isBiz,conf:+conf.toFixed(2)}},
+ intake(note,roles){const n=String(note||'').toLowerCase();const found=new Set(roles||[]);for(const[r,kw]of Object.entries(this.roles))if(kw.some(k=>new RegExp('\\b'+k+'\\b').test(n)))found.add(r);const opp=['invest','fund','book','hire','collab','collaborate','sponsor','partner','budget','project','deal','shoot','feature','interview'].filter(k=>n.includes(k));const big=[...found].some(r=>['investor','brand/sponsor'].includes(r));const tier=opp.length&&big?'Gold':opp.length?'Silver':'Bronze';const priority=opp.length&&big?'high':opp.length?'medium':'low';return{roles:[...found],opportunity:opp.join(', '),priority,suggested_tier:tier,conf:opp.length||found.size?.86:.62}},
+ dup(c,list){const d=digits(c.phone),e=String(c.email||'').toLowerCase(),n=String(c.name||'').toLowerCase().replace(/[^a-z]/g,'');for(const x of list){if(d&&d.length>=7&&digits(x.phone)===d)return{id:x.id,conf:.95,why:'same phone'};if(e&&String(x.email||'').toLowerCase()===e)return{id:x.id,conf:.95,why:'same email'}}for(const x of list){if(n&&n.length>3&&String(x.name||'').toLowerCase().replace(/[^a-z]/g,'')===n)return{id:x.id,conf:.7,why:'same name'}}return null},
+ reply(text){const t=String(text||'').trim().toLowerCase();if(/^(stop|stopall|unsubscribe|cancel|end|quit)\b/.test(t))return{label:'STOP',by:'code',conf:1};const R=[['not interested',['not interested','no thanks','no thank you','pass']],['wrong person',['wrong number','wrong person','who is this','dont know you',"don't know you"]],['scheduling',['tuesday','monday','wednesday','thursday','friday','tomorrow','next week','calendar','schedule','time works','available']],['question',['?','how','what','when','where']],['interested',['yes','interested','love to','sounds good','down','let\'s','lets']]];for(const[l,k]of R)if(k.some(x=>t.includes(x)))return{label:l,by:'jev',conf:.8};return{label:'unclear',by:'jev',conf:.4}},
+ tripScore(c){return(c.rating||0)*2+({Gold:3,Silver:2,Bronze:1}[c.relationship_tier]||0)+(c.consent_status==='granted'?1:0)}
+};
+
+/* ============ UI HELPERS ============ */
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>t.style.display='none',3200)}
+function closeModal(){$$('.modal').forEach(m=>m.remove())}
+function modal(html,cls=''){closeModal();const d=document.createElement('div');d.className='modal';d.innerHTML=`<div class="mbox ${cls}" role="dialog" aria-modal="true">${html}<p><button class="btn" onclick="closeModal()">Close</button></p></div>`;d.addEventListener('click',e=>{if(e.target===d)closeModal()});document.body.appendChild(d);hydrate(d)}
+const badge=s=>`<span class="badge">${esc(s)}</span>`;
+function copyText(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied')).catch(()=>modal(`<h2>Copy this</h2><pre>${esc(t)}</pre>`))}
+function slowNet(){const c=navigator.connection;return !!(c&&(c.saveData||/(^|-)2g$/.test(c.effectiveType||'')))}
+function hydrate(root=document){
+ $$('[data-qr]',root).forEach(el=>qrInto(el,el.dataset.qr,+el.dataset.size||180));
+ $$('video[data-vid]',root).forEach(async v=>{const u=await IDB.url(v.dataset.vid);if(u){v.src=u;v.play().catch(()=>{})}});
+ $$('[data-n]',root).forEach(el=>{const n=+el.dataset.n||0;if(matchMedia('(prefers-reduced-motion:reduce)').matches||n===0){el.textContent=n;return}const t0=performance.now();const step=t=>{const p=Math.min(1,(t-t0)/800);el.textContent=Math.round(n*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+ $$('.gl-card',root).forEach(c=>{c.classList.remove('fx-ready');if(c.dataset.fx!=='none'&&!slowNet()){const go=()=>requestAnimationFrame(()=>c.classList.add('fx-ready'));document.readyState==='complete'?setTimeout(go,150):addEventListener('load',go,{once:true})}});
+}
+function tiltMove(x,y){$$('.gl-card.fx-tilt').forEach(c=>{const a=c.classList.contains('int-med')?2:1;c.style.setProperty('--tx',(x*8*a).toFixed(1)+'px');c.style.setProperty('--ty',(y*8*a).toFixed(1)+'px')})}
+addEventListener('deviceorientation',e=>{if(e.gamma==null)return;tiltMove(Math.max(-1,Math.min(1,e.gamma/30)),Math.max(-1,Math.min(1,(e.beta-45)/30)))});
+addEventListener('mousemove',e=>{if($('.gl-card.fx-tilt'))tiltMove(e.clientX/innerWidth*2-1,e.clientY/innerHeight*2-1);
+ const p=e.target.closest&&e.target.closest('.panel,.ctable,.auth,.stat,.side');if(p){const r=p.getBoundingClientRect();p.style.setProperty('--mx',(e.clientX-r.left)+'px');p.style.setProperty('--my',(e.clientY-r.top)+'px')}
+ const c=e.target.closest&&e.target.closest('.pv .gl-card, .cardstage .gl-card');if(c&&!matchMedia('(prefers-reduced-motion:reduce)').matches){const r=c.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(1100px) rotateY(${(x*10).toFixed(2)}deg) rotateX(${(-y*10).toFixed(2)}deg)`;c.style.setProperty('--sx',(x*100+50)+'%');c.style.setProperty('--sy',(y*100+50)+'%')}});
+addEventListener('mouseout',e=>{const c=e.target.closest&&e.target.closest('.pv .gl-card, .cardstage .gl-card');if(c&&!c.contains(e.relatedTarget))c.style.transform=''});
+/* ============ CARD RENDER ============ */
+function bgLayer(card){const b=card.bg||{kind:'preset',id:'p1'};
+ if(b.kind==='video_url')return`<div class="gl-bg" style="background:#0a0a0a"><video src="${esc(b.url)}" poster="${esc(b.poster||'')}" muted loop playsinline autoplay></video></div>`;
+ if(b.kind==='solid')return`<div class="gl-bg" style="background:${esc(b.color||'#444')}"></div>`;
+ if(b.kind==='upload'){const up=DB.uploads.find(x=>x.id===b.id);if(up&&up.type==='image')return`<div class="gl-bg" style="background-image:url('${up.url}')"></div>`;if(up&&up.type==='video_loop')return`<div class="gl-bg" style="background:#222"><video data-vid="${esc(up.id)}" muted loop playsinline autoplay></video></div>`}
+ const p=PRESETS.find(p=>p.id===b.id)||PRESETS[0];return`<div class="gl-bg" style="background:${p.url}"></div>`}
+function cardHTML(card,o={}){const u=owner(card),L=limits(u),sh=new Set(card.fields_shown);const g=k=>cv(card,k);
+ const fx=card.dynamic&&L.effects?(card.background_effect==='portrait'&&!(card.portrait.generated&&(card.portrait.approved||!o.public))?'none':card.background_effect):'none';
+ const a=(k,href)=>o.public?`href="${esc(href)}" target="_blank" rel="noopener"`:'';
+ const rows=['phone','email','website','booking','instagram','x','linkedin','tiktok','youtube'].filter(k=>sh.has(k)&&g(k)).map(k=>`<a class="gl-row" ${a(k,linkFor(k,g(k)))}><span>${FIELDS.find(f=>f[0]===k)[1]}</span><span>${esc(g(k))}</span></a>`);
+ (u.custom_fields||[]).filter(f=>sh.has('pf_'+f.id)&&f.value).forEach(f=>rows.push(`<a class="gl-row" ${a('',f.kind==='phone'?'tel:'+f.value:f.kind==='email'?'mailto:'+f.value:safeUrl(f.value))}><span>${esc(f.label)}</span><span>${esc(f.value)}</span></a>`));
+ if(sh.has('custom'))card.custom_links.filter(l=>l.label&&l.url).forEach(l=>rows.push(`<a class="gl-row" ${a('',safeUrl(l.url))}><span>${esc(l.label)}</span><span>${esc(l.url.replace(/^https?:\/\//,''))}</span></a>`));
+ const btns=[`<button class="gl-btn" ${o.public?`onclick="A.saveVcf('${card.id}')"`:'type="button"'}>Save Contact</button>`];
+ card.buttons.filter(b=>b.on).forEach(b=>{let href='#',label=b.label;if(b.kind==='intake'){href=`#/f/${card.id}`;label=b.label||'Tell me who you are'}else if(b.kind==='book'){href=safeUrl(b.url||g('booking'));label=b.label||'Book a call'}else if(b.kind==='website'){href=safeUrl(b.url||g('website'));label=b.label||'Visit website'}else{href=safeUrl(b.url)}if(!label)return;
+  btns.push(o.public?`<a class="gl-btn" href="${esc(href)}" ${b.kind==='intake'?'':'target="_blank" rel="noopener"'}>${esc(label)}</a>`:`<span class="gl-btn">${esc(label)}</span>`)});
+ const sub=[sh.has('title')?g('title'):'',sh.has('company')?g('company'):''].filter(Boolean).join(', ');const pe=card.photo_effect||'none';
+ return`<div class="gl-card fx-${fx} ${card.effect_intensity==='medium'?'int-med':''}" data-fx="${fx}">${bgLayer(card)}<div class="gl-shade"></div>
+ <div class="gl-sheen"></div><div class="gl-content"><div class="gl-pw pe-${pe} ${card.photo_shape==='circle'?'circle':''}">${card.photo_url?`<img class="gl-photo ${card.photo_shape==='circle'?'circle':''}" src="${card.photo_url}" alt="">`:`<div class="gl-photo ${card.photo_shape==='circle'?'circle':''}"></div>`}</div>
+ ${sh.has('name')?`<div class="gl-name">${esc(g('name'))}</div>`:''}${sub?`<div class="gl-sub">${esc(sub)}</div>`:''}
+ <div class="gl-rows">${rows.join('')}</div><div class="gl-btns">${btns.join('')}</div>
+ ${L.footer?`<a class="gl-foot" ${o.public?'href="https://goldex.link" target="_blank" rel="noopener"':''}>Made with Goldex</a>`:''}</div></div>`}
+function qrCardHTML(card){const u=owner(card);const line=[cv(card,'title'),cv(card,'company')].filter(Boolean).join(', ');return`<div class="qrcard">${card.photo_url?`<img class="ph" src="${card.photo_url}" alt="">`:''}<h2 style="margin:.5rem 0 .2rem">${esc(cv(card,'name'))}</h2><div style="color:#555">${esc(line)}</div><div class="qr" data-qr="${esc(cardUrl(card)+'?src=qr')}" data-size="240" style="margin-top:.8rem"></div><div style="font-size:.8rem;color:#555">Scan to open my card</div></div>`}
+function vcardOf(card){const u=owner(card),sh=new Set(card.fields_shown),g=k=>cv(card,k);const L=['BEGIN:VCARD','VERSION:3.0'];const e=s=>String(s).replace(/[,;\\]/g,m=>'\\'+m).replace(/\n/g,'\\n');let it=0;const item=(prop,val,label)=>{it++;L.push(`item${it}.${prop}:${val}`,`item${it}.X-ABLabel:${e(label)}`)};
+ if(sh.has('name')){const nm=g('name'),p=nm.split(' ');L.push('N:'+e(p.slice(1).join(' '))+';'+e(p[0])+';;;','FN:'+e(nm))}
+ if(sh.has('title')&&g('title'))L.push('TITLE:'+e(g('title')));if(sh.has('company')&&g('company'))L.push('ORG:'+e(g('company')));
+ if(sh.has('phone')&&g('phone'))L.push('TEL;TYPE=CELL,VOICE:'+g('phone'));if(sh.has('email')&&g('email'))L.push('EMAIL;TYPE=INTERNET,PREF:'+g('email'));
+ if(sh.has('website')&&g('website'))item('URL',linkFor('website',g('website')),'Website');if(sh.has('booking')&&g('booking'))item('URL',linkFor('booking',g('booking')),'Book a call');
+ const SOC={instagram:'Instagram',x:'X',linkedin:'LinkedIn',tiktok:'TikTok',youtube:'YouTube'};Object.entries(SOC).forEach(([k,lab])=>{if(sh.has(k)&&g(k)){const url=linkFor(k,g(k));const h=String(g(k)).replace(/^@/,'').split('/').pop();L.push(`X-SOCIALPROFILE;type=${k==='x'?'twitter':k};x-user=${e(h)}:${url}`);item('URL',url,lab)}});
+ if(sh.has('custom'))card.custom_links.forEach(l=>l.url&&item('URL',safeUrl(l.url),l.label||'Link'));
+ (u.custom_fields||[]).filter(f=>sh.has('pf_'+f.id)&&f.value).forEach(f=>{if(f.kind==='phone')item('TEL',f.value,f.label);else if(f.kind==='email')item('EMAIL',f.value,f.label);else if(f.kind==='url')item('URL',safeUrl(f.value),f.label);else L.push('NOTE:'+e(f.label+': '+f.value))});
+ if(card.photo_url&&card.photo_url.startsWith('data:image/jpeg'))L.push('PHOTO;ENCODING=b;TYPE=JPEG:'+card.photo_url.split(',')[1]);
+ L.push('END:VCARD');return L.join('\r\n')}
+
+/* ============ ROUTER ============ */
+const V={};
+function parseHash(){const h=location.hash.slice(1)||'/home';const[path,qs]=h.split('?');return{parts:path.split('/').filter(Boolean),q:Object.fromEntries(new URLSearchParams(qs||''))}}
+function go(h){if(location.hash===h)route();else location.hash=h}
+function render(html){$('#app').innerHTML=html;hydrate($('#app'));scrollTo(0,0)}
+function notFound(msg){return shell('Not found',`<p>${esc(msg||'That page does not exist.')}</p><a class="btn" href="#/home">Go home</a>`)}
+let refreshT;
+function route(){clearInterval(refreshT);closeModal();const{parts,q}=parseHash();const[a,b,c,d]=parts;
+ if(a==='p')return render(V.pubCard(b,c,q));if(a==='q')return render(V.pubQR(b,c));if(a==='f')return render(V.pubIntake(b));if(a==='t')return V.pubTag(b);
+ if(a==='login'||a==='signup'||a==='reset'){if(me()&&a!=='reset')return go('#/home');return render(V[a](q))}
+ const u=me();if(!u)return go('#/login');
+ if(!u.onboarded&&a!=='onboarding'&&!(a==='cards'&&q.from==='onb'))return go('#/onboarding');
+ let html;
+ switch(a){
+  case'onboarding':html=V.onboarding(q);break;
+  case'home':html=V.home();break;
+  case'cards':html=!b?V.cards():b==='new'?V.newCard():c==='edit'?V.builder(b,q):V.cardDetail(b);break;
+  case'events':html=!b?V.events():b==='new'?V.newEvent():c==='live'?V.eventMode(b,q):V.eventBuilder(b);if(c==='live')refreshT=setInterval(()=>{if(!$('.modal')&&document.activeElement.tagName!=='INPUT')render(V.eventMode(b,parseHash().q))},5000);break;
+  case'forms':html=V.formBuilder(b,q);break;
+  case'contacts':html=!b?(q.review?V.reviewQueue():V.contacts(q)):V.contactDetail(b);break;
+  case'import':html=V.importer(q);break;
+  case'trip':html=V.trip(q);break;
+  case'messages':html=V.messages(q);break;
+  case'tags':html=!b?V.tags():V.tagDetail(b);break;
+  case'order':html=V.order(q);break;
+  case'orders':html=V.orderDone(b);break;
+  case'manifest':html=V.manifest();break;
+  case'settings':html=V.settings();break;
+  default:html=notFound()}
+ render(html)}
+const curTheme=()=>{try{return localStorage.getItem('goldex_theme')||'auto'}catch(e){return'auto'}};
+const IC={home:'<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',cards:'<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6.5 16c.6-1.2 1.5-2 2.5-2s1.9.8 2.5 2"/>',events:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',contacts:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.8 3.1 2.6 3.5 5.2"/>',messages:'<path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z"/>',tags:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',out:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l4-4-4-4M14 12H3"/>'};
+const icon=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
+function shell(title,body,active){const u=me(),L=limits(u);const nav=[['home','Home'],['cards','Cards'],['events','Events'],['contacts','Contacts'],['messages','Messages']];
+ return`<div class="shell"><nav class="side" aria-label="Main"><div class="brand">Gold<em>ex</em></div><a class="me" href="#/settings">${u.photo?`<img src="${u.photo}" alt="">`:'<span class="av"></span>'}<span>${esc(u.name||u.email)}</span><b class="plan">${esc(L.name)}</b></a>${nav.map(([k,l])=>`<a href="#/${k}" class="nav ${active===k?'on':''}">${icon(k)}${l}</a>`).join('')}<div class="side-sub"><a href="#/tags" class="nav ${active==='tags'?'on':''}">${icon('tags')}NFC Tags</a><a href="#/settings" class="nav ${active==='settings'?'on':''}">${icon('settings')}Settings</a><div class="theme" role="group" aria-label="Theme">${['auto','light','dark'].map(t=>`<button class="${curTheme()===t?'on':''}" onclick="A.theme('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div><a href="#/login" class="nav" onclick="event.preventDefault();A.logout()">${icon('out')}Log out</a></div></nav><main class="main">${title?`<h1>${esc(title)}</h1>`:''}${body}</main></div>`}
+
+/* ============ AUTH ============ */
+const authCard=(inner)=>`<div class="authwrap"><main class="auth"><div class="mark">Gold<em>ex</em></div>${inner}</main></div>`;
+V.login=()=>authCard(`<p class="lede">Your network, indexed.</p><div class="oauth"><button class="btn" onclick="A.oauth('Apple')">Apple</button><button class="btn" onclick="A.oauth('Google')">Google</button></div><div class="or">or</div><form onsubmit="A.login(event)"><label>Email<input name="email" type="email" required autocomplete="username"></label><label>Password<input name="password" type="password" required autocomplete="current-password"></label><button class="btn primary">Log in</button></form><p class="foot"><a href="#/reset">Forgot password</a> &nbsp; &nbsp; New here? <a href="#/signup">Create an account</a></p><p class="foot small">Test account: amechi@addcolormedia.com / VANTA</p>`);
+V.signup=()=>authCard(`<p class="lede">Open your index.</p><form onsubmit="A.signup(event)"><label>Name<input name="name" required></label><label>Email<input name="email" type="email" required></label><label>Password<input name="password" type="password" minlength="5" required></label><button class="btn primary">Create account</button></form><p class="foot">Already a member? <a href="#/login">Log in</a></p>`);
+V.reset=()=>authCard(`<p class="lede">We'll email you a reset link.</p><form onsubmit="A.reset(event)"><label>Email<input name="email" type="email" required></label><button class="btn primary">Send reset link</button></form><p class="foot"><a href="#/login">Back to log in</a></p>`);
+
+/* ============ ONBOARDING ============ */
+V.onboarding=q=>{const u=me(),s=+q.step||1;const skip=`<button class="btn" onclick="A.finishOnb()">Skip onboarding</button>`;let body='';
+ if(s===1)body=`<form onsubmit="A.onb1(event)"><label>Your name<input name="name" value="${esc(u.name)}" required></label><label>Title<input name="title" value="${esc(u.title)}"></label><label>Company<input name="company" value="${esc(u.company)}"></label><button class="btn primary">Next</button></form>`;
+ if(s===2)body=`${u.photo?`<img src="${u.photo}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:50%">`:'<p class="muted">No photo yet.</p>'}<label>Upload profile photo<input type="file" accept="image/*" onchange="A.userPhoto(this,'#/onboarding?step=2')"></label><a class="btn" href="#/onboarding?step=1">Back</a><a class="btn primary" href="#/onboarding?step=3">Next</a>`;
+ if(s===3)body=`<p>Your first card opens in the Card Builder with your details filled in.</p><a class="btn" href="#/onboarding?step=2">Back</a><button class="btn primary" onclick="A.onbCard()">Create first card</button>`;
+ if(s===4){const c=byId('cards',q.card)||mainCard(u);body=c?`<p>Your card link:</p><p><code>${esc(cardUrl(c))}</code> <button class="btn" onclick="copyText('${esc(cardUrl(c))}')">Copy</button> <a class="btn" href="${cardHash(c)}">Open card</a></p><div class="qr" data-qr="${esc(cardUrl(c)+'?src=qr')}" data-size="180"></div><p><a class="btn" href="#/order?card=${c.id}" onclick="A.finishOnb(true)">Order NFC stickers</a><button class="btn primary" onclick="A.finishOnb()">Finish</button></p>`:`<p>No live card yet.</p><button class="btn primary" onclick="A.finishOnb()">Finish</button>`}
+ return`<div class="authwrap"><main class="auth" style="max-width:520px"><p class="muted small">Step ${s} of 4</p><h1>${['Your details','Profile photo','Create your first card','Share it'][s-1]}</h1>${body}<p>${skip}</p></main></div>`};
+
+/* ============ HOME ============ */
+V.home=()=>{const u=me(),t=todayStr(),L=limits(u);const scans=myScans(),subs=mySubs();
+ const live=mine('events').filter(e=>eventStatus(e)==='live');
+ const act=[...scans.map(s=>({t:s.timestamp,x:`${s.source.toUpperCase()} open`,y:byId('cards',s.card_id)?.name||'card'})),...subs.map(s=>({t:s.created_at,x:`Intake from ${s.name}`,y:byId('cards',s.card_id)?.name||'card'}))].sort((a,b)=>b.t.localeCompare(a.t)).slice(0,10);
+ const opens=scans.filter(s=>dstr(s.timestamp)===t).length,fresh=mine('contacts').filter(c=>dstr(c.created_at)===t).length,pend=pendingFollowups().length;
+ const date=new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+ return shell(null,`<div class="hero-h"><div><h1>Overview</h1><p class="lede">${date}. ${mine('contacts').length.toLocaleString()} contacts indexed, ${mine('cards').filter(c=>c.status==='live').length} live card${mine('cards').filter(c=>c.status==='live').length===1?'':'s'}.</p></div><a class="btn primary" href="#/cards/new">New card</a></div>
+ ${DB.seeded?'<div class="note">Demo data is loaded so every screen has something to test. Reset or clear it in Settings.</div>':''}
+ <section class="panel"><h2>Today</h2><div class="stats"><div class="stat"><b data-n="${opens}">0</b>Card opens</div><div class="stat"><b data-n="${fresh}">0</b>New contacts</div><div class="stat"><b data-n="${pend}">0</b><a href="#/messages?tab=send&pending=1">Follow-ups waiting</a></div><div class="stat"><b data-n="${mine('tags').filter(x=>x.status==='active').length}">0</b>Active tags</div></div></section>
+ ${live.map(e=>`<section class="panel live"><div class="hero-h"><div><h2>Live now: ${esc(e.name)}</h2><p class="muted small">${DB.submissions.filter(s=>s.event_id===e.id).length} intake submissions, ${esc(e.city||'')}</p></div><a class="btn primary" href="#/events/${e.id}/live">Open Event Mode</a></div></section>`).join('')}
+ <section class="panel"><h2>Quick actions</h2><div class="row"><a class="btn" href="#/cards/new">New card</a><a class="btn" href="#/events/new">New event</a><a class="btn" href="#/import">Import contacts</a><a class="btn" href="#/order">Order NFC stickers</a><a class="btn" href="#/messages">Send a message</a></div></section>
+ <section class="panel"><h2>Recent activity</h2>${act.length?`<ul class="act">${act.map(a=>`<li><span>${esc(a.x)}</span><span class="tagp">${esc(a.y)}</span><span class="spacer"></span><span class="muted small">${fmtDT(a.t)}</span></li>`).join('')}</ul>`:'<p class="muted">No opens or submissions yet. Share a card to start the index.</p>'}</section>`,'home')};
+
+/* ============ CARDS ============ */
+function thumb(c){if(c.bg.kind==='video_url')return`<div style="width:40px;height:56px;border-radius:4px;background:url('${esc(c.bg.poster||'')}') center/cover #222"></div>`;const p=c.bg.kind==='preset'?(PRESETS.find(x=>x.id===c.bg.id)||PRESETS[0]).url:c.bg.kind==='solid'?c.bg.color:'#555';return`<div style="width:40px;height:56px;border-radius:4px;background:${esc(p)};display:flex;align-items:center;justify-content:center">${c.photo_url?`<img src="${c.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover" alt="">`:''}</div>`}
+V.cards=()=>{const cs=mine('cards');return shell('Cards',`<p><a class="btn primary" href="#/cards/new">New Card</a></p>${cs.length?`<div class="tw"><table><tr><th></th><th>Card</th><th>Type</th><th>Status</th><th>Scans</th></tr>${cs.map(c=>`<tr class="click" onclick="go('#/cards/${c.id}')"><td>${thumb(c)}</td><td>${esc(c.name)}</td><td>${esc(c.type)}</td><td>${badge(c.status==='live'?'Live':'Draft')}</td><td>${scansForCard(c.id).length}</td></tr>`).join('')}</table></div>`:'<p class="muted">No cards yet. Create one to get a shareable link and QR code.</p>'}`,'cards')};
+V.newCard=()=>{const u=me(),L=limits(u);if(mine('cards').length>=L.cards)return shell('New card',`<div class="banner">The ${L.name} plan includes ${L.cards} card. Upgrade to Pro in Settings for unlimited cards.</div><a class="btn" href="#/settings">Open Settings</a>`,'cards');const c=newCard(u);DB.cards.push(c);persist();setTimeout(()=>location.replace(`#/cards/${c.id}/edit?step=1`));return shell('',`<p>Creating card...</p>`,'cards')};
+const STEPS=['Card type and label','Profile photo','Background','Dynamic effect','Details shown','Buttons','Intake form','Publish'];
+V.builder=(id,q)=>{const c=byId('cards',id),u=me();if(!c||c.user_id!==u.id)return notFound('Card not found.');const s=Math.min(8,Math.max(1,+q.step||1));const fr=q.from?`&from=${q.from}`:'';const link=n=>`#/cards/${c.id}/edit?step=${n}${fr}`;
+ return shell(null,`<p><a href="#/cards">Cards</a> / ${esc(c.name)} ${badge(c.status==='live'?'Live':'Draft')}</p>
+ <div class="builder"><div class="pv"><div id="preview">${cardHTML(c)}</div><p class="muted small">Live preview. Move your cursor over the card to see depth. Receivers with reduce motion on see the static version.</p></div>
+ <div><ol class="steps">${STEPS.map((t,i)=>`<li class="${i+1===s?'on':''}"><a href="${link(i+1)}">${t}</a></li>`).join('')}</ol>
+ <section class="panel"><h2>${s}. ${STEPS[s-1]}</h2>${builderStep(c,s,q)}</section>
+ <div class="row">${s>1?`<a class="btn" href="${link(s-1)}">Back</a>`:''}<button class="btn" onclick="A.draft('${c.id}')">Save as draft</button>${s<8?`<a class="btn primary" href="${link(s+1)}">Next</a>`:''}</div></div></div>`,'cards')};
+function builderStep(c,s,q){const u=me(),L=limits(u),id=c.id;const set=(k,full)=>`A.cset('${id}','${k}',this.type==='checkbox'?this.checked:this.value,${full?1:0})`;
+ switch(s){
+ case 1:return`<label>Type<select onchange="A.ctype('${id}',this.value)">${['Full Contact','Public','Event','Custom'].map(t=>opt(t,t,c.type)).join('')}</select></label><p class="muted small">Changing type resets the fields shown to that type's defaults (Custom keeps your current selection).</p><label>Internal label<input value="${esc(c.name)}" placeholder="e.g., Austin Conference" oninput="${set('name')}"></label>`;
+ case 2:return`${c.photo_url?`<img src="${c.photo_url}" alt="" style="width:110px;height:110px;object-fit:cover;border-radius:${c.photo_shape==='circle'?'50%':'8px'}">`:'<p class="muted">No photo.</p>'}
+  <label>Upload or take photo (auto-cropped to square)<input type="file" accept="image/*" capture="user" onchange="A.cardPhoto(this,'${id}')"></label>
+  <div><label class="inl"><input type="radio" name="sh" ${c.photo_shape!=='circle'?'checked':''} onchange="A.cset('${id}','photo_shape','square',1)">Square</label><label class="inl"><input type="radio" name="sh" ${c.photo_shape==='circle'?'checked':''} onchange="A.cset('${id}','photo_shape','circle',1)">Circle</label></div>
+  <p>${u.photo?`<button class="btn" onclick="A.cset('${id}','photo_url',me().photo,1)">Use my profile photo</button>`:''}<button class="btn" onclick="A.cset('${id}','photo_url','',1)">Remove photo</button></p>
+  <h3>Photo presence</h3><p class="muted small">Presets that give the portrait motion and depth. All run on-device; Living Portrait (step 4) adds AI-generated movement.</p><div class="row">${[['none','Still'],['halo','Gold halo'],['glass','Glass lens'],['float','Float'],['shimmer','Light sweep'],['orbit','Orbit ring'],['mono','Editorial mono']].map(([v,l])=>`<button class="chip ${(c.photo_effect||'none')===v?'on':''}" onclick="A.cset('${id}','photo_effect','${v}',1)">${l}</button>`).join('')}</div>`;
+ case 3:{const tab=q.tab||'library',t=n=>`#/cards/${id}/edit?step=3&tab=${n}${q.from?'&from='+q.from:''}`;let body='';
+  if(tab==='library')body=`<div class="swatches">${PRESETS.map(p=>`<button class="swatch ${c.bg.kind==='preset'&&c.bg.id===p.id?'on':''}" style="background:${p.url}" onclick="A.cbg('${id}',{kind:'preset',id:'${p.id}'})" aria-label="${p.name}">${p.name}</button>`).join('')}</div><p class="muted small">12 launch presets (placeholders until the final library is supplied).</p>`;
+  if(tab==='upload')body=L.uploads?`<label>Upload JPG or PNG (up to 10 MB), or MP4 loop (up to 10 seconds, 15 MB)<input type="file" accept="image/jpeg,image/png,video/mp4" onchange="A.bgUpload(this,'${id}')"></label>${DB.uploads.filter(x=>x.owner_id===u.id).length?`<h3>Your uploads</h3><div class="swatches">${DB.uploads.filter(x=>x.owner_id===u.id).map(x=>`<button class="swatch ${c.bg.kind==='upload'&&c.bg.id===x.id?'on':''}" style="${x.type==='image'?`background:url('${x.url}') center/cover`:'background:#333'}" onclick="A.cbg('${id}',{kind:'upload',id:'${x.id}'})">${x.type==='image'?'Image':'Video loop'}</button>`).join('')}</div>`:''}`:`<div class="banner">Uploads are a Pro feature. Change plan in Settings to test.</div>`;
+  if(tab==='solid')body=`<label>Solid color<input type="color" value="${esc(c.bg.kind==='solid'?c.bg.color:'#333333')}" oninput="A.cbg('${id}',{kind:'solid',color:this.value},0)"></label>`;
+  return`<div class="tabs"><a href="${t('library')}" class="${tab==='library'?'on':''}">Library</a><a href="${t('upload')}" class="${tab==='upload'?'on':''}">Upload your own</a><a href="${t('solid')}" class="${tab==='solid'?'on':''}">Solid color</a></div>${body}`}
+ case 4:return(L.effects?'':`<div class="banner">Dynamic effects are a Pro feature. The receiver sees a static card on the ${L.name} plan.</div>`)+`<label class="chk"><input type="checkbox" ${c.dynamic?'checked':''} ${L.effects?'':'disabled'} onchange="${set('dynamic',1)}">Dynamic on</label>
+  <fieldset ${c.dynamic&&L.effects?'':'disabled'}><legend>Effect</legend>${[['drift','Drift: slow movement of the background'],['pulse','Pulse: gentle breathing scale and brightness'],['tilt','Tilt: background shifts as the phone moves (mouse on desktop)'],['portrait','Living Portrait (premium): animates the profile photo']].map(([v,l])=>`<label class="chk" style="display:flex"><input type="radio" name="fx" ${c.background_effect===v?'checked':''} onchange="A.cset('${id}','background_effect','${v}',1)">${l}</label>`).join('')}
+  <p>Intensity: <label class="inl"><input type="radio" name="int" ${c.effect_intensity!=='medium'?'checked':''} onchange="A.cset('${id}','effect_intensity','low',1)">Low</label><label class="inl"><input type="radio" name="int" ${c.effect_intensity==='medium'?'checked':''} onchange="A.cset('${id}','effect_intensity','medium',1)">Medium</label></p></fieldset>
+  ${c.background_effect==='portrait'&&c.dynamic?`<div class="panel"><h3>Living Portrait</h3><p>Credits available: ${u.credits.portrait}. One credit per generation. 5-second loop.</p>${c.photo_url?'':'<p class="conf-low">Add a profile photo first (step 2).</p>'}<button class="btn" ${c.photo_url&&u.credits.portrait>0?'':'disabled'} onclick="A.portraitGen('${id}')">${c.portrait.generated?'Regenerate':'Generate'} (1 credit)</button>${c.portrait.generated?`<label class="chk"><input type="checkbox" ${c.portrait.approved?'checked':''} onchange="A.portraitApprove('${id}',this.checked)">I approve this portrait for publishing</label>`:''}<div class="note">Simulated: the preview uses a CSS motion stand-in. Production calls an image-to-video provider and stores the returned loop.</div></div>`:''}`;
+ case 5:{const ov=c.overrides||{};const row=(k,l)=>{const isOv=ov[k]!==undefined;return`<tr><td><input type="checkbox" aria-label="Show ${l}" ${c.fields_shown.includes(k)?'checked':''} onchange="A.cfield('${id}','${k}',this.checked)"></td><td>${l}</td><td><input value="${esc(isOv?ov[k]:u[k])}" oninput="A.fval('${id}','${k}',this.value)" ${k==='email'?'type="email"':''}></td><td><label class="chk small"><input type="checkbox" ${isOv?'checked':''} onchange="A.cov('${id}','${k}',this.checked)">This card only</label></td></tr>`};
+  return`<p class="muted small">Values come from your profile. Tick "This card only" to customize a value for this card without changing your profile, for example a different title at a conference.</p><div class="tw"><table><tr><th>Show</th><th>Field</th><th>Value</th><th></th></tr>${FIELDS.filter(f=>f[0]!=='custom').map(([k,l])=>row(k,l)).join('')}
+  ${(u.custom_fields||[]).map(f=>`<tr><td><input type="checkbox" aria-label="Show ${esc(f.label)}" ${c.fields_shown.includes('pf_'+f.id)?'checked':''} onchange="A.cfield('${id}','pf_${f.id}',this.checked)"></td><td>${esc(f.label)} <span class="muted small">(${f.kind})</span></td><td colspan="2"><input value="${esc(f.value)}" oninput="A.pfSet('${f.id}','value',this.value,'${id}')"></td></tr>`).join('')}
+  <tr><td><input type="checkbox" aria-label="Show custom links" ${c.fields_shown.includes('custom')?'checked':''} onchange="A.cfield('${id}','custom',this.checked)"></td><td>Custom links</td><td colspan="2">${c.custom_links.map((l,i)=>`<div class="row"><input placeholder="Label" value="${esc(l.label)}" oninput="A.clink('${id}',${i},'label',this.value)"><input placeholder="URL" value="${esc(l.url)}" oninput="A.clink('${id}',${i},'url',this.value)"><button class="btn" onclick="A.clinkDel('${id}',${i})">Remove</button></div>`).join('')}<button class="btn" onclick="A.clinkAdd('${id}')">Add link</button></td></tr></table></div><p class="muted small">Need another profile field, like a second website? <a href="#/settings">Add it in Settings</a> and it appears here.</p>`}
+ case 6:return`<p><b>Save Contact</b> is always shown first. Drag or use Up/Down to order the rest.</p><ul class="drag" id="btnlist">${c.buttons.map((b,i)=>`<li draggable="true" data-i="${i}" ondragstart="event.dataTransfer.setData('text/plain','${i}')" ondragover="event.preventDefault()" ondrop="A.btnDrop(event,'${id}',${i})"><div class="row"><label class="chk"><input type="checkbox" ${b.on?'checked':''} onchange="A.bset('${id}',${i},'on',this.checked,1)">${{intake:'Tell me who you are (intake form)',book:'Book a call',website:'Visit website',custom:'Custom button'}[b.kind]}</label><button class="btn" onclick="A.bmove('${id}',${i},-1)" ${i?'':'disabled'}>Up</button><button class="btn" onclick="A.bmove('${id}',${i},1)" ${i<c.buttons.length-1?'':'disabled'}>Down</button></div>
+  <div class="row"><input placeholder="Label" value="${esc(b.label)}" oninput="A.bset('${id}',${i},'label',this.value)">${b.kind!=='intake'?`<input placeholder="${b.kind==='book'?'Booking URL (defaults to profile)':b.kind==='website'?'URL (defaults to profile website)':'URL'}" value="${esc(b.url)}" oninput="A.bset('${id}',${i},'url',this.value)">`:''}</div>${b.kind==='intake'&&b.on&&!c.intake_form_id?'<p class="conf-low small">No intake form attached yet (step 7).</p>':''}</li>`).join('')}</ul><button class="btn" onclick="A.baddCustom('${id}')">Add another custom button</button>`;
+ case 7:{const forms=mine('forms');const cur=byId('forms',c.intake_form_id);return`<label>Attached form<select onchange="A.cset('${id}','intake_form_id',this.value,1)">${opt('','None',c.intake_form_id)}${forms.map(f=>opt(f.id,f.event_id?'Event: '+(byId('events',f.event_id)?.name||'?'):'Standalone form '+f.id.slice(2),c.intake_form_id)).join('')}</select></label>
+  ${cur?`<p><a class="btn" href="#/forms/${cur.id}?back=${encodeURIComponent('#/cards/'+id+'/edit?step=7')}">Edit this form</a></p>`:''}<p><button class="btn" onclick="A.standaloneForm('${id}')">Build a standalone form</button></p><p class="muted small">Attaching a form turns on the "Tell me who you are" button.</p>`}
+ case 8:{const slug=c.slug||uniqueSlug(u,c.name);return`<label>Link slug<input id="slug" value="${esc(slug)}" oninput="$('#slugprev').textContent='${esc(base(u))}/${esc(u.username)}/'+this.value"></label><p class="muted small">Link: <span id="slugprev">${esc(base(u))}/${esc(u.username)}/${esc(slug)}</span></p>
+  <button class="btn primary" onclick="A.publish('${id}','${q.from||''}')">${c.status==='live'?'Update live card':'Publish'}</button>${c.status==='live'?`<button class="btn" onclick="A.unpublish('${id}')">Unpublish</button>`:''}`}}}
+
+/* ============ CARD DETAIL ============ */
+V.cardDetail=id=>{const c=byId('cards',id),u=me();if(!c||c.user_id!==u.id)return notFound('Card not found.');const url=cardUrl(c),sc=scansForCard(id);const src=k=>sc.filter(s=>s.source===k).length;const tags=mine('tags').filter(t=>cardDest(t)?.id===id);
+ return shell(null,`<p><a href="#/cards">Cards</a> / ${esc(c.name)} ${badge(c.status==='live'?'Live':'Draft')}</p>
+ <div class="builder"><div class="pv">${cardHTML(c)}<p><a class="btn" href="#/cards/${id}/edit?step=1">Edit</a>${c.status==='live'?`<a class="btn" href="${cardHash(c)}">Open receiver view</a>`:''}</p></div><div>
+ ${c.status!=='live'?'<div class="banner">This card is a draft. Publish it to make the link, QR code, and tags work.</div>':''}
+ <section class="panel"><h2>Share</h2><p><code style="word-break:break-all">${esc(url)}</code></p><p><button class="btn" onclick="copyText('${esc(url)}')">Copy</button><button class="btn" onclick="A.share('${esc(url)}','${esc(u.name)}')">Share</button></p>
+ <div class="qr" data-qr="${esc(url+'?src=qr')}" data-size="180"></div><p><button class="btn" onclick="A.qrPng('${id}')">Download PNG</button><button class="btn" onclick="A.qrPdf('${id}')">Download PDF</button><button class="btn" onclick="A.qrFull('${id}')">Show QR full screen</button></p></section>
+ <section class="panel"><h2>QR Card version</h2>${qrCardHTML(c)}<p><button class="btn" onclick="A.qrCardPng('${id}')">Download PNG</button><button class="btn" onclick="A.qrCardPdf('${id}')">Download PDF</button><a class="btn" href="#/q/${u.username}/${c.slug}">View full screen</a></p></section>
+ <section class="panel"><h2>NFC</h2>${tags.length?`<div class="tw"><table><tr><th>Tag ID</th><th>Status</th><th>Scans</th></tr>${tags.map(t=>`<tr class="click" onclick="go('#/tags/${t.id}')"><td>${t.id}${t.label?' ('+esc(t.label)+')':''}</td><td>${t.status}</td><td>${t.scan_count}</td></tr>`).join('')}</table></div>`:'<p class="muted">No tags point to this card.</p>'}<a class="btn" href="#/order?card=${id}">Order NFC stickers</a><button class="btn" onclick="A.writeTag('card','${id}')">Write to my own sticker</button></section>
+ <section class="panel"><h2>Stats</h2><div class="stats"><div class="stat"><b>${sc.length}</b>Total opens</div><div class="stat"><b>${src('nfc')}</b>NFC</div><div class="stat"><b>${src('qr')}</b>QR</div><div class="stat"><b>${src('link')}</b>Link</div><div class="stat"><b>${c.saves||0}</b>Saves</div><div class="stat"><b>${DB.submissions.filter(s=>s.card_id===id).length}</b>Intake submissions</div></div></section>
+ <p><button class="btn" onclick="A.dupCard('${id}')">Duplicate</button>${c.status==='live'?`<button class="btn" onclick="A.unpublish('${id}')">Unpublish</button>`:`<a class="btn" href="#/cards/${id}/edit?step=8">Publish</a>`}<button class="btn danger" onclick="A.delCard('${id}')">Delete</button></p></div></div>`,'cards')};
+/* ============ EVENTS ============ */
+V.events=()=>{const es=mine('events');const grp=k=>es.filter(e=>eventStatus(e)===k).sort((a,b)=>a.start_date.localeCompare(b.start_date));const tbl=list=>list.length?`<div class="tw"><table><tr><th>Name</th><th>Dates</th><th>City</th><th>Submissions</th><th></th></tr>${list.map(e=>`<tr class="click" onclick="go('#/events/${e.id}')"><td>${esc(e.name)}</td><td>${fmtD(e.start_date)}${e.end_date&&e.end_date!==e.start_date?' to '+fmtD(e.end_date):''}</td><td>${esc(e.city)}</td><td>${DB.submissions.filter(s=>s.event_id===e.id).length}</td><td><a class="btn" href="#/events/${e.id}/live" onclick="event.stopPropagation()">Event Mode</a></td></tr>`).join('')}</table></div>`:'<p class="muted">None.</p>';
+ return shell('Events',`<p><a class="btn primary" href="#/events/new">New Event</a></p><h2>Live</h2>${tbl(grp('live'))}<h2>Upcoming</h2>${tbl(grp('upcoming'))}<h2>Past</h2>${tbl(grp('past'))}`,'events')};
+V.newEvent=()=>{const u=me(),L=limits(u);if(mine('events').length>=L.events)return shell('New event',`<div class="banner">The ${L.name} plan includes ${L.events} event. Upgrade in Settings for unlimited events.</div>`,'events');const e={id:'e_'+rid(),user_id:u.id,name:'New event',start_date:todayStr(),end_date:todayStr(),city:'',venue:'',card_ids:[],intake_form_id:'',status:'active'};DB.events.push(e);persist();setTimeout(()=>location.replace('#/events/'+e.id));return shell('',`<p>Creating event...</p>`,'events')};
+V.eventBuilder=id=>{const e=byId('events',id),u=me();if(!e||e.user_id!==u.id)return notFound('Event not found.');const f=byId('forms',e.intake_form_id);const tags=mine('tags');
+ return shell(null,`<p><a href="#/events">Events</a> / ${esc(e.name)} ${badge(eventStatus(e))}</p><h1>Event Builder</h1>
+ <form class="panel" onsubmit="A.saveEvent(event,'${id}')"><h2>Details</h2><label>Name<input name="name" value="${esc(e.name)}" required></label><div class="grid2"><label>Start date<input type="date" name="start_date" value="${e.start_date}" required></label><label>End date<input type="date" name="end_date" value="${e.end_date}"></label><label>City<input name="city" value="${esc(e.city)}"></label><label>Venue<input name="venue" value="${esc(e.venue)}"></label></div>
+ <h2>Cards receivers see</h2>${mine('cards').map(c=>`<label class="chk" style="display:flex"><input type="checkbox" name="cards" value="${c.id}" ${e.card_ids.includes(c.id)?'checked':''}>${esc(c.name)} ${badge(c.status)}</label>`).join('')||'<p class="muted">No cards yet.</p>'}<p class="muted small">The first checked card opens when a tag assigned to this event is tapped.</p>
+ <h2>NFC tags for this event</h2>${tags.length?tags.map(t=>`<label class="chk" style="display:flex"><input type="checkbox" name="tags" value="${t.id}" ${t.points_to?.kind==='event'&&t.points_to.id===id?'checked':''}>${t.id}${t.label?' ('+esc(t.label)+')':''}, ${t.status}, now: ${esc(destLabel(t.points_to))}</label>`).join(''):'<p class="muted">No tags yet.</p>'}
+ <p><button class="btn primary">Save event</button><a class="btn" href="#/order?event=${id}">Order new tags</a></p></form>
+ <section class="panel"><h2>Intake form</h2>${f?`<p>${esc(f.event_checkbox_label)}; ${f.role_options.length} roles; phone ${f.ask_phone?'on':'off'}; email ${f.ask_email?'on':'off'}.</p><a class="btn" href="#/forms/${f.id}?back=${encodeURIComponent('#/events/'+id)}">Edit intake form</a>`:`<button class="btn" onclick="A.eventForm('${id}')">Create intake form</button>`}</section>
+ <p><a class="btn" href="#/events/${id}/live">Open Event Mode</a><button class="btn danger" onclick="A.delEvent('${id}')">Delete event</button></p>`,'events')};
+
+/* ============ INTAKE FORM BUILDER ============ */
+function intakeFormHTML(f,u,o={}){return`<form class="intake" ${o.public?`onsubmit="A.submitIntake(event,'${o.cardId}')"`:'onsubmit="return false"'}><h2>Tell ${esc(firstName(u.name))} who you are</h2>
+ ${f.event_checkbox_label?`<label class="chk"><input type="checkbox" name="event" checked> ${esc(f.event_checkbox_label)}</label>`:''}
+ <label>Name<input name="name" required autocomplete="name"></label>${f.ask_phone?'<label>Phone (optional)<input name="phone" type="tel" autocomplete="tel"></label>':''}${f.ask_email?'<label>Email (optional)<input name="email" type="email" autocomplete="email"></label>':''}
+ <fieldset><legend>I am a</legend>${f.role_options.map(r=>`<label class="chk"><input type="checkbox" name="roles" value="${esc(r)}"> ${esc(r)}</label>`).join('')}</fieldset>
+ <label>${esc(f.note_prompt.replace('[Name]',firstName(u.name)))}<textarea name="note"></textarea></label>
+ <label class="chk"><input type="checkbox" name="consent"> ${esc(f.consent_label)}</label><p><button class="btn primary" ${o.public?'':'type="button" disabled'}>Submit</button></p></form>`}
+V.formBuilder=(id,q)=>{const f=byId('forms',id),u=me();if(!f||f.user_id!==u.id)return notFound('Form not found.');const back=q.back||'#/events';const upd=k=>`A.fset('${id}','${k}',this.type==='checkbox'?this.checked:this.value)`;
+ return shell(null,`<p><a href="${esc(back)}">Back</a></p><h1>Intake Form Builder</h1><div class="builder"><div class="pv"><div class="panel" id="fprev">${intakeFormHTML(f,u)}</div><p class="muted small">Receiver preview</p></div><div class="panel">
+ <label>Event checkbox label<input value="${esc(f.event_checkbox_label)}" oninput="${upd('event_checkbox_label')}" placeholder="I'm at [Event]"></label>
+ <h3>Role checkboxes</h3>${f.role_options.map((r,i)=>`<div class="row"><input value="${esc(r)}" aria-label="Role ${i+1}" onchange="A.frole('${id}',${i},this.value)"><button class="btn" onclick="A.froleDel('${id}',${i})">Remove</button></div>`).join('')}<div class="row"><input id="newrole" placeholder="Add a role"><button class="btn" onclick="A.froleAdd('${id}')">Add</button></div>
+ <h3>Contact fields</h3><label class="chk"><input type="checkbox" ${f.ask_phone?'checked':''} onchange="${upd('ask_phone')}">Ask for phone</label><label class="chk"><input type="checkbox" ${f.ask_email?'checked':''} onchange="${upd('ask_email')}">Ask for email</label>
+ <label>Note prompt<input value="${esc(f.note_prompt)}" oninput="${upd('note_prompt')}"></label><label>Consent checkbox label<input value="${esc(f.consent_label)}" oninput="${upd('consent_label')}"></label>
+ <p><a class="btn primary" href="${esc(back)}">Done</a></p></div></div>`,'events')};
+
+/* ============ EVENT MODE ============ */
+V.eventMode=(id,q)=>{const e=byId('events',id),u=me();if(!e||e.user_id!==u.id)return notFound('Event not found.');const t=todayStr();
+ if(CF.evLock!==id)CF={q:'',f:{events_met:[id]},sort:{key:'',dir:'asc'},evLock:id};
+ const tagIds=new Set(mine('tags').filter(x=>x.points_to?.kind==='event'&&x.points_to.id===id).map(x=>x.id));
+ const taps=DB.scans.filter(s=>(s.event_id===id||tagIds.has(s.tag_id)||e.card_ids.includes(s.card_id))&&dstr(s.timestamp)>=e.start_date&&dstr(s.timestamp)<=(e.end_date||e.start_date)).length;
+ const subs=DB.submissions.filter(s=>s.event_id===id);const card=e.card_ids.map(x=>byId('cards',x)).find(c=>c&&c.status==='live');
+ return shell(null,`<p><a href="#/events">Events</a> / <a href="#/events/${id}">${esc(e.name)}</a></p><div class="hero-h"><div><h1>${esc(e.name)}</h1><p class="lede">Event Mode, ${badge(eventStatus(e))} ${esc(e.city||'')}. Same contact index, filtered to this event. Refreshes every 5 seconds.</p></div><a class="btn primary" href="#/messages?tab=send&event=${id}&today=1">Follow up with everyone from today</a></div>
+ <div class="stats" style="margin-bottom:1rem"><div class="stat"><b data-n="${taps}">0</b>Taps and scans</div><div class="stat"><b data-n="${subs.length}">0</b>Submissions</div><div class="stat"><b data-n="${subs.filter(s=>dstr(s.created_at)===t).length}">0</b>Today</div><div class="stat"><b data-n="${subs.filter(s=>s.consent).length}">0</b>Consented</div></div>
+ <div class="toolbar"><input id="csearch" class="search" value="${esc(CF.q)}" oninput="A.cq(this.value)" placeholder="Search this event's contacts" aria-label="Search"><div class="row">${card?`<a class="btn" href="${cardHash(card,'nfc')}">Test: open event card</a>${card.intake_form_id?`<a class="btn" href="#/f/${card.id}">Test: open intake form</a>`:''}`:'<span class="muted small">Assign a live card to this event to test taps.</span>'}<a class="btn" href="#/contacts?fields=1">Edit columns</a></div></div>
+ <div id="cwrap">${contactsBody(['intake_note'])}</div>`,'events')};
+
+/* ============ CONTACT FIELDS (editable schema) ============ */
+const DEFAULT_CFIELDS=()=>[
+ {key:'name',label:'Name',type:'text',builtin:true,locked:true,visible:true},
+ {key:'roles',label:'Roles',type:'multi',options:[...ROLES_DEFAULT],builtin:true,visible:true},
+ {key:'city',label:'City',type:'text',builtin:true,visible:true},
+ {key:'company',label:'Company',type:'text',builtin:true,visible:true},
+ {key:'customer',label:'Customer status',type:'select',options:['Lead','Customer','Repeat customer','Past customer'],builtin:true,visible:true},
+ {key:'relationship_tier',label:'Tier',type:'select',options:['Gold','Silver','Bronze'],builtin:true,visible:true},
+ {key:'rating',label:'Rating',type:'rating',builtin:true,visible:true},
+ {key:'events_met',label:'Events met',type:'events',builtin:true,visible:true},
+ {key:'last_contacted',label:'Last contacted',type:'computed',builtin:true,visible:true,readonly:true},
+ {key:'birthday',label:'Birthday',type:'date',builtin:true,visible:true},
+ {key:'source',label:'Source',type:'select',options:['import','intake','manual'],builtin:true,visible:false,readonly:true},
+ {key:'state',label:'State',type:'text',builtin:true,visible:false},
+ {key:'phone',label:'Phone',type:'text',builtin:true,visible:false},
+ {key:'email',label:'Email',type:'text',builtin:true,visible:false},
+ {key:'cost_tier',label:'Cost',type:'select',options:['$','$$','$$$'],builtin:true,visible:false},
+ {key:'consent_status',label:'Consent',type:'select',options:['granted','none','revoked'],builtin:true,visible:false,readonly:true},
+ {key:'intake_note',label:'Note',type:'text',builtin:true,visible:false,readonly:true}];
+const FTYPES={text:'Text',number:'Number',select:'Single choice',multi:'Multiple choice',date:'Date',rating:'Rating 1-5',checkbox:'Yes / No'};
+const cfields=()=>me().cfields;
+const fieldBy=k=>cfields().find(f=>f.key===k);
+function getV(c,f){if(f.key==='last_contacted')return lastMessageTo(c.id)||'';if(f.key.startsWith('cf_'))return(c.cf||{})[f.key]??(f.type==='multi'?[]:'');const v=c[f.key];return v??(f.type==='multi'||f.type==='events'?[]:'')}
+function setV(c,f,v){if(f.key.startsWith('cf_')){c.cf=c.cf||{};c.cf[f.key]=v}else c[f.key]=v}
+function getOptions(f){if(f.type==='events')return mine('events').map(e=>({v:e.id,l:e.name}));if(f.type==='select'||f.type==='multi'){const vals=new Set(f.options||[]);mine('contacts').forEach(c=>{const v=getV(c,f);(Array.isArray(v)?v:[v]).forEach(x=>x&&vals.add(x))});return[...vals].map(v=>({v,l:v}))}if(f.type==='text'){const vals=[...new Set(mine('contacts').map(c=>getV(c,f)).filter(Boolean))].sort();return vals.slice(0,60).map(v=>({v,l:v}))}return[]}
+const stars=n=>n?'★'.repeat(n)+'☆'.repeat(5-n):'';
+function showV(c,f){const v=getV(c,f);switch(f.type){case'multi':return(v||[]).map(x=>`<span class="tagp">${esc(x)}</span>`).join('');case'events':return(v||[]).map(id=>`<span class="tagp">${esc(byId('events',id)?.name||'?')}</span>`).join('');case'rating':return`<span class="stars">${stars(+v||0)}</span>`;case'date':return v?esc(fmtD(v)):'';case'computed':return v?esc(fmtD(dstr(v))):'<span class="muted">Never</span>';case'checkbox':return v?'Yes':'';case'select':return v?`<span class="tagp">${esc(v)}</span>`:'';default:return esc(v)}}
+function matchF(c,f,val){if(val===''||val==null||(Array.isArray(val)&&!val.length))return true;const v=getV(c,f);const want=Array.isArray(val)?val:[val];
+ switch(f.type){case'multi':case'events':return(v||[]).some(x=>want.includes(x));case'select':return want.includes(v);case'rating':case'number':return(+v||0)>=+want[0];case'date':return(v||'').slice(5,7)===want[0];case'checkbox':return want[0]==='yes'?!!v:!v;
+  case'computed':{const d=v?(Date.now()-new Date(v))/864e5:Infinity;const w=want[0];return w==='never'?!v:w==='over90'?d>90:d<=+w}
+  default:return typeof val==='string'?String(v||'').toLowerCase().includes(val.toLowerCase()):want.includes(v)}}
+function applyFilters(list,filters,q){const qq=(q||'').toLowerCase();return list.filter(c=>(!qq||[c.name,c.email,c.phone,c.city,c.company,c.notes,c.intake_note].join(' ').toLowerCase().includes(qq))&&Object.entries(filters||{}).every(([k,val])=>{const f=fieldBy(k);return!f||matchF(c,f,val)}))}
+function sortList(list,s){if(!s||!s.key)return list.sort((a,b)=>a.name.localeCompare(b.name));const f=fieldBy(s.key);if(!f)return list;const key=c=>{const v=getV(c,f);if(f.type==='events')return(v||[]).map(id=>byId('events',id)?.name||'').join(',');return Array.isArray(v)?v.join(','):(f.type==='rating'||f.type==='number')?(+v||0):String(v||'')};return list.sort((a,b)=>{const x=key(a),y=key(b);const r=typeof x==='number'?x-y:String(x).localeCompare(String(y));return s.dir==='desc'?-r:r})}
+function filterLabel(f,val){const a=Array.isArray(val)?val:[val];if(f.type==='events')return a.map(id=>byId('events',id)?.name||id).join(', ');if(f.type==='rating'||f.type==='number')return a[0]+'+';if(f.type==='date')return new Date(2000,+a[0]-1,1).toLocaleString([],{month:'long'});if(f.type==='computed')return{never:'never',over90:'over 90 days','7':'within 7 days','30':'within 30 days','90':'within 90 days'}[a[0]];return typeof val==='string'?'contains "'+val+'"':a.join(', ')}
+
+/* ============ CONTACTS ============ */
+let CF={q:'',f:{},sort:{key:'',dir:'asc'}};let SEL=new Set();
+function filteredContacts(){return sortList(applyFilters(mine('contacts'),CF.f,CF.q),CF.sort)}
+V.contacts=q=>{if(q.fields)return V.fieldManager();if(CF.evLock){CF={q:'',f:{},sort:{key:'',dir:'asc'}}}const u=me(),L=limits(u);const all=mine('contacts');const rq=all.filter(c=>c.review).length;
+ return shell('Contacts',`${rq?`<div class="banner">${rq} contact${rq>1?'s need':' needs'} review. Jev was unsure about the tags. <a href="#/contacts?review=1">Open review queue</a></div>`:''}
+ <div class="toolbar"><input id="csearch" class="search" value="${esc(CF.q)}" oninput="A.cq(this.value)" placeholder="Search name, company, city, notes" aria-label="Search contacts">
+ <div class="row"><a class="btn" href="#/import">Import</a><button class="btn" onclick="A.addContact()">Add contact</button><a class="btn" href="#/trip">Trip Mode</a><a class="btn" href="#/contacts?fields=1">Edit columns</a></div></div>
+ <div id="cwrap">${contactsBody()}</div>
+ <p class="muted small">${all.length} of ${L.contacts===Infinity?'unlimited':L.contacts.toLocaleString()} contacts on ${L.name}. Click a column name to filter or sort. Click any cell to edit it.</p>`,'contacts')};
+function contactsBody(extra){const list=filteredContacts();const vis=cfields().filter(f=>f.visible||(extra||[]).includes(f.key));const act=Object.entries(CF.f).filter(([,v])=>v!==''&&!(Array.isArray(v)&&!v.length));
+ return`<div class="row" style="margin:.2rem 0 .6rem">${act.map(([k,v])=>{const f=fieldBy(k);return f?`<button class="chip on" onclick="A.fclear('${k}')" aria-label="Remove filter">${esc(f.label)}: ${esc(filterLabel(f,v))} <span aria-hidden="true">×</span></button>`:''}).join('')}${act.length?'<button class="chip" onclick="A.fclearAll()">Clear all</button>':''}
+ <span class="spacer"></span><span class="muted small">${list.length} shown</span><button class="btn" onclick="A.msgShown()" ${list.length?'':'disabled'}>Message all shown</button><button class="btn primary" id="msgsel" onclick="A.msgSelected()" ${SEL.size?'':'disabled'}>Message selected (${SEL.size})</button></div>
+ <div class="tw ctable">${list.length?`<table><thead><tr><th class="ck"><input type="checkbox" aria-label="Select all shown" onchange="A.selAll(this.checked)"></th>${vis.map(f=>{const on=CF.f[f.key]!=null&&CF.f[f.key]!==''&&!(Array.isArray(CF.f[f.key])&&!CF.f[f.key].length);return`<th><button class="colh ${on?'on':''}" onclick="A.colMenu('${f.key}',this)">${esc(f.label)}${CF.sort.key===f.key?(CF.sort.dir==='asc'?' ↑':' ↓'):''}<span class="caret" aria-hidden="true"></span></button></th>`}).join('')}</tr></thead><tbody>
+ ${list.map(c=>`<tr><td class="ck"><input type="checkbox" class="csel" value="${c.id}" ${SEL.has(c.id)?'checked':''} onchange="A.sel('${c.id}',this.checked)" aria-label="Select ${esc(c.name)}"></td>${vis.map(f=>f.key==='name'?`<td><a class="cname" href="#/contacts/${c.id}">${esc(c.name)}</a>${c.review?' <span class="tagp warn">review</span>':''}</td>`:`<td class="cell ${f.readonly?'ro':''}" ${f.readonly?'':`onclick="A.cellEdit('${c.id}','${f.key}',this)"`}>${showV(c,f)||'<span class="empty">+</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'<div class="empty-state"><p>No contacts match.</p><button class="btn" onclick="A.fclearAll()">Clear filters</button><a class="btn" href="#/import">Import contacts</a></div>'}</div>`}
+function refreshContacts(){const w=$('#cwrap');if(w)w.innerHTML=contactsBody(CF.evLock?['intake_note']:[])}
+/* popover */
+function pop(anchor,html){closePop();const r=anchor.getBoundingClientRect();const p=document.createElement('div');p.className='pop';p.innerHTML=html;document.body.appendChild(p);const w=p.offsetWidth,h=p.offsetHeight;let x=Math.min(r.left,innerWidth-w-12),y=r.bottom+6;if(y+h>innerHeight-12)y=Math.max(12,r.top-h-6);p.style.left=Math.max(12,x)+'px';p.style.top=y+'px';setTimeout(()=>addEventListener('mousedown',popOut),0);const i=p.querySelector('input:not([type=checkbox])');if(i)i.focus()}
+function popOut(e){const p=$('.pop');if(p&&!p.contains(e.target))closePop()}
+function closePop(){$$('.pop').forEach(p=>p.remove());removeEventListener('mousedown',popOut)}
+addEventListener('keydown',e=>{if(e.key==='Escape')closePop()});
+function colMenuHTML(k){const f=fieldBy(k),val=CF.f[k];const arr=Array.isArray(val)?val:val?[val]:[];let body='';
+ if(['multi','select','events'].includes(f.type)||(f.type==='text'&&typeof val!=='string')){const opts=getOptions(f);body=(f.type==='text'?`<input class="pin" placeholder="Contains..." oninput="A.fset('${k}',this.value)">`:'')+(opts.length?`<div class="plist">${opts.map(o=>`<label class="pitem"><input type="checkbox" ${arr.includes(o.v)?'checked':''} onchange="A.ftoggle('${k}',${esc(JSON.stringify(o.v))})"><span>${esc(o.l)}</span><span class="muted small">${mine('contacts').filter(c=>matchF(c,f,[o.v])).length}</span></label>`).join('')}</div>`:'<p class="muted small">No values yet.</p>')}
+ else if(f.type==='text')body=`<input class="pin" value="${esc(val)}" placeholder="Contains..." oninput="A.fset('${k}',this.value)">`;
+ else if(f.type==='rating'||f.type==='number')body=`<div class="plist">${(f.type==='rating'?[1,2,3,4,5]:[1,5,10,50,100]).map(n=>`<label class="pitem"><input type="radio" name="pr" ${String(arr[0])===String(n)?'checked':''} onchange="A.fset('${k}',['${n}'])"><span>${f.type==='rating'?stars(n):n}${n<5||f.type!=='rating'?' and up':''}</span></label>`).join('')}</div>`;
+ else if(f.type==='date')body=`<div class="plist">${['01','02','03','04','05','06','07','08','09','10','11','12'].map(m=>`<label class="pitem"><input type="radio" name="pr" ${arr[0]===m?'checked':''} onchange="A.fset('${k}',['${m}'])"><span>${new Date(2000,+m-1,1).toLocaleString([],{month:'long'})}</span></label>`).join('')}</div>`;
+ else if(f.type==='computed')body=`<div class="plist">${[['7','Within 7 days'],['30','Within 30 days'],['90','Within 90 days'],['over90','Over 90 days ago'],['never','Never']].map(([v,l])=>`<label class="pitem"><input type="radio" name="pr" ${arr[0]===v?'checked':''} onchange="A.fset('${k}',['${v}'])"><span>${l}</span></label>`).join('')}</div>`;
+ else if(f.type==='checkbox')body=`<div class="plist">${[['yes','Yes'],['no','No']].map(([v,l])=>`<label class="pitem"><input type="radio" name="pr" ${arr[0]===v?'checked':''} onchange="A.fset('${k}',['${v}'])"><span>${l}</span></label>`).join('')}</div>`;
+ return`<div class="phead"><b>${esc(f.label)}</b><span class="muted small">${FTYPES[f.type]||'Automatic'}</span></div><div class="row"><button class="chip ${CF.sort.key===k&&CF.sort.dir==='asc'?'on':''}" onclick="A.csort('${k}','asc')">Sort A to Z</button><button class="chip ${CF.sort.key===k&&CF.sort.dir==='desc'?'on':''}" onclick="A.csort('${k}','desc')">Z to A</button></div>${body}<div class="row pfoot"><button class="btn" onclick="A.fclear('${k}');closePop()">Clear</button><a class="btn" href="#/contacts?fields=1">Edit column</a><button class="btn primary" onclick="closePop()">Done</button></div>`}
+function cellEditHTML(cid,k){const c=byId('contacts',cid),f=fieldBy(k),v=getV(c,f);const set=`A.cellSet('${cid}','${k}',`;
+ switch(f.type){
+  case'multi':case'events':return`<div class="phead"><b>${esc(f.label)}</b><span class="muted small">${esc(c.name)}</span></div><div class="plist">${getOptions(f).map(o=>`<label class="pitem"><input type="checkbox" ${(v||[]).includes(o.v)?'checked':''} onchange="A.cellToggle('${cid}','${k}',${esc(JSON.stringify(o.v))})"><span>${esc(o.l)}</span></label>`).join('')}</div>${f.type==='multi'?`<div class="row"><input class="pin" id="newopt" placeholder="Add a new option"><button class="btn" onclick="A.cellNewOpt('${cid}','${k}')">Add</button></div>`:''}`;
+  case'select':return`<div class="phead"><b>${esc(f.label)}</b><span class="muted small">${esc(c.name)}</span></div><div class="plist">${[{v:'',l:'None'},...getOptions(f)].map(o=>`<label class="pitem"><input type="radio" name="cs" ${v===o.v?'checked':''} onchange="${set}${esc(JSON.stringify(o.v))});closePop()"><span>${esc(o.l)}</span></label>`).join('')}</div>`;
+  case'rating':return`<div class="phead"><b>${esc(f.label)}</b></div><div class="row">${[0,1,2,3,4,5].map(n=>`<button class="chip ${+v===n?'on':''}" onclick="${set}${n});closePop()">${n?stars(n):'None'}</button>`).join('')}</div>`;
+  case'checkbox':return`<label class="pitem"><input type="checkbox" ${v?'checked':''} onchange="${set}this.checked)"><span>${esc(f.label)}</span></label>`;
+  default:return`<div class="phead"><b>${esc(f.label)}</b><span class="muted small">${esc(c.name)}</span></div><input class="pin" type="${f.type==='date'?'date':f.type==='number'?'number':'text'}" value="${esc(v)}" onchange="${set}${f.type==='number'?'+this.value':'this.value'})" onkeydown="if(event.key==='Enter'){this.blur();closePop()}"><p class="muted small">Press Enter to save.</p>`}}
+V.fieldManager=()=>{const fs=cfields();return shell('Columns and filters',`<p><a href="#/contacts">Contacts</a></p><p class="muted">Every column is also a filter. Rename anything, hide what you don't use, reorder, edit the choices, or add your own.</p>
+ ${fs.map((f,i)=>`<section class="panel fm"><div class="row"><input value="${esc(f.label)}" aria-label="Column name" onchange="A.fldSet(${i},'label',this.value)" class="fmname"><span class="tagp">${FTYPES[f.type]||(f.type==='events'?'Events':'Automatic')}</span><span class="spacer"></span>
+ <label class="chk"><input type="checkbox" ${f.visible?'checked':''} ${f.locked?'disabled':''} onchange="A.fldSet(${i},'visible',this.checked)">Show</label><button class="btn" onclick="A.fldMove(${i},-1)" ${i?'':'disabled'}>Up</button><button class="btn" onclick="A.fldMove(${i},1)" ${i<fs.length-1?'':'disabled'}>Down</button>${f.builtin?'':`<button class="btn danger" onclick="A.fldDel(${i})">Delete</button>`}</div>
+ ${(f.type==='select'||f.type==='multi')&&!f.readonly?`<div class="opts">${f.options.map((o,j)=>`<span class="optrow"><input value="${esc(o)}" aria-label="Option" onchange="A.optRename(${i},${j},this.value)"><button class="link" onclick="A.optDel(${i},${j})" aria-label="Remove option">Remove</button></span>`).join('')}<span class="optrow"><input placeholder="Add option" onkeydown="if(event.key==='Enter'){A.optAdd(${i},this.value)}"><button class="link" onclick="A.optAdd(${i},this.previousElementSibling.value)">Add</button></span></div>`:''}
+ ${f.builtin&&!f.locked?'<p class="muted small">Built-in: can be renamed and hidden. It stays in the data because intake, Trip Mode, or messaging use it.</p>':''}</section>`).join('')}
+ <form class="panel" onsubmit="A.fldAdd(event)"><h2>Add a column</h2><div class="grid2"><label>Name<input name="label" required placeholder="e.g., Industry, Tags, Referred by"></label><label>Type<select name="type">${Object.entries(FTYPES).map(([k,v])=>opt(k,v,'select')).join('')}</select></label><label>Choices (for choice types, comma separated)<input name="options" placeholder="e.g., Music, Tech, Wellness"></label></div><button class="btn primary">Add column</button></form>
+ <p><button class="btn" onclick="A.fldReset()">Restore default columns</button></p>`,'contacts')};
+V.reviewQueue=()=>{const list=mine('contacts').filter(c=>c.review);return shell('Review queue',`<p><a href="#/contacts">Contacts</a></p>${list.length?list.map(c=>`<div class="panel"><b>${esc(c.name)}</b> <span class="conf-low small">confidence ${Math.round(c.review.conf*100)}%</span><p>${esc(c.review.reason)}</p><button class="btn primary" onclick="A.reviewAccept('${c.id}')">Accept suggestion</button><button class="btn" onclick="A.reviewDismiss('${c.id}')">Keep as is</button><a class="btn" href="#/contacts/${c.id}">Edit manually</a></div>`).join(''):'<p class="muted">Nothing to review.</p>'}`,'contacts')};
+function fieldEditor(f,c){const v=getV(c,f),n=esc(f.key);if(f.readonly||f.type==='computed')return`<div class="fld"><span class="flab">${esc(f.label)}</span><div>${showV(c,f)||'<span class="muted">None</span>'}</div></div>`;
+ switch(f.type){case'multi':case'events':return`<fieldset class="fld wide"><legend>${esc(f.label)}</legend>${getOptions(f).map(o=>`<label class="chk"><input type="checkbox" name="${n}" value="${esc(o.v)}" ${(v||[]).includes(o.v)?'checked':''}>${esc(o.l)}</label>`).join('')||'<span class="muted">No options yet.</span>'}</fieldset>`;
+  case'select':return`<label>${esc(f.label)}<select name="${n}">${opt('','None',v)}${getOptions(f).map(o=>opt(o.v,o.l,v)).join('')}</select></label>`;
+  case'rating':return`<label>${esc(f.label)}<select name="${n}">${opt('0','Not rated',v)}${[1,2,3,4,5].map(r=>opt(r,stars(r),v)).join('')}</select></label>`;
+  case'checkbox':return`<label class="chk"><input type="checkbox" name="${n}" ${v?'checked':''}>${esc(f.label)}</label>`;
+  default:return`<label>${esc(f.label)}<input name="${n}" type="${f.type==='date'?'date':f.type==='number'?'number':f.key==='email'?'email':f.key==='phone'?'tel':'text'}" value="${esc(v)}" ${f.key==='name'?'required':''}></label>`}}
+V.contactDetail=id=>{const c=byId('contacts',id),u=me();if(!c||c.user_id!==u.id)return notFound('Contact not found.');const msgs=DB.messages.filter(m=>m.recipients.includes(id));const subs=DB.submissions.filter(s=>s.contact_id===id);const reps=DB.replies.filter(r=>r.contact_id===id);
+ return shell(null,`<p><a href="#/contacts">Contacts</a></p><h1>${esc(c.name)}</h1>
+ <p class="row">${c.phone?`<a class="btn" href="tel:${esc(c.phone)}">Call</a><a class="btn" href="${smsHref([c.phone],'')}">Text</a>`:''}${c.email?`<a class="btn" href="mailto:${esc(c.email)}">Email</a>`:''}<a class="btn" href="#/messages?tab=send&ids=${id}">Add to group message</a><button class="btn danger" onclick="A.delContact('${id}')">Delete</button></p>
+ ${c.jev?`<div class="note">Jev: priority ${esc(c.jev.priority)}${c.jev.opportunity?', opportunity mentioned ('+esc(c.jev.opportunity)+')':''}, suggested tier ${esc(c.jev.suggested_tier)}.</div>`:''}
+ ${c.intake_note?`<div class="panel"><h2>Intake note</h2><p>${esc(c.intake_note)}</p></div>`:''}
+ <form class="panel" onsubmit="A.saveContact(event,'${id}')"><div class="grid2">${cfields().filter(f=>!['multi','events'].includes(f.type)&&f.key!=='consent_status').map(f=>fieldEditor(f,c)).join('')}<label>Socials<input name="socials" value="${esc(c.socials)}"></label><label>Website<input name="website" value="${esc(c.website)}"></label></div>
+ ${cfields().filter(f=>['multi','events'].includes(f.type)).map(f=>fieldEditor(f,c)).join('')}
+ <div class="fld"><span class="flab">Consent</span><p>${esc(c.consent_status)}${c.consent_timestamp?' ('+fmtDT(c.consent_timestamp)+')':''}</p>${c.consent_status==='granted'?`<button type="button" class="btn" onclick="A.revoke('${id}')">Record opt-out</button>`:'<p class="muted small">Consent is recorded only through the intake form.</p>'}</div>
+ <label>Notes<textarea name="notes">${esc(c.notes)}</textarea></label><button class="btn primary">Save contact</button></form>
+ <section class="panel"><h2>Activity</h2><ul class="act">${[...msgs.map(m=>({t:m.sent_at||m.scheduled_at,x:`${m.status==='sent'?'Sent':'Scheduled'} ${m.channel.toUpperCase()}${m.kind==='phone'?' from your phone':''}: ${m.body.slice(0,60)}`})),...subs.map(s=>({t:s.created_at,x:`Intake submission via ${byId('cards',s.card_id)?.name||'card'}`})),...reps.map(r=>({t:r.created_at,x:`Reply (${r.label}): ${r.text}`}))].sort((a,b)=>(b.t||'').localeCompare(a.t||'')).map(a=>`<li>${esc(a.x)} <span class="muted small">${fmtDT(a.t)}</span></li>`).join('')||'<li class="muted">No activity yet.</li>'}</ul><p class="muted small">Card scans are anonymous. A contact is linked to a scan only when they submit the intake form.</p></section>`,'contacts')};
+/* generic segment filter (Messages) */
+function segmentFilters(filters,on){return`<div class="grid2">${cfields().filter(f=>['multi','select','events','rating','date','computed','checkbox'].includes(f.type)||f.key==='city').map(f=>{const cur=Array.isArray(filters[f.key])?filters[f.key][0]:filters[f.key]||'';let opts=[];
+ if(f.type==='rating')opts=[1,2,3,4,5].map(n=>({v:String(n),l:n+'+'}));else if(f.type==='date')opts=['01','02','03','04','05','06','07','08','09','10','11','12'].map(m=>({v:m,l:new Date(2000,+m-1,1).toLocaleString([],{month:'long'})}));else if(f.type==='computed')opts=[['7','Within 7 days'],['30','Within 30 days'],['over90','Over 90 days ago'],['never','Never']].map(([v,l])=>({v,l}));else if(f.type==='checkbox')opts=[{v:'yes',l:'Yes'},{v:'no',l:'No'}];else opts=getOptions(f);
+ return`<label>${esc(f.label)}<select onchange="${on}('${f.key}',this.value?[this.value]:'')">${opt('','Any',cur)}${opts.map(o=>opt(o.v,o.l,cur)).join('')}</select></label>`}).join('')}</div>`}
+/* ============ IMPORT ============ */
+let IMP={step:1,source:'',rows:[]};
+const SAMPLE_IMPORT=`name,phone,email,city
+Mike Photographer ATL,404-555-0142,,
+Sarah (Investor) NYC,212-555-0199,sarah.v@example.com,
+Dre Video LA,,dre.films@example.com,
+Joe's Pizza,510-555-0110,,Oakland
+Jordan Hale,555-010-0000,,
+Tee,,tee@example.com,
+Kofi Mensah Founder,,kofi@example.com,Accra
+Brand Mgr Lisa Chen Houston,713-555-0101,,
+Marcus 2 Podcast,,,
+`;
+function prepRows(recs){const u=me(),L=limits(u),existing=mine('contacts');return recs.map(r=>{let p={name:r.name,city:r.city||'',state:r.state||'',roles:[],isBusiness:false,conf:.95};if(L.ai&&jevTick()){p=JEV.parseName(r.name);if(r.city&&!p.city){p.city=r.city;}}else p.conf=.9;const row={raw:r.name,name:p.name,phone:r.phone||'',email:r.email||'',city:p.city||r.city||'',state:p.state||r.state||'',roles:p.roles,isBusiness:p.isBusiness,conf:p.conf,gate:JEV.gate(p.conf),notes:r.notes||''};row.dup=JEV.dup(row,existing);row.action=row.dup&&row.dup.conf>=.85?'merge':'import';return row})}
+V.importer=q=>{const u=me(),L=limits(u),s=IMP.step;let body='';
+ if(s===1)body=`<h2>Step 1: Select source</h2>${L.ai?'':'<div class="banner">AI tagging (Jev) is a Pro feature. On Free, contacts import with names as-is.</div>'}
+  <div class="panel"><h3>Phone contacts</h3><button class="btn" onclick="A.impPhone()">Pick from phone contacts</button><p class="muted small">Works in browsers that support the Contact Picker (Chrome on Android). The iOS app reads contacts natively.</p></div>
+  <div class="panel"><h3>VCF file</h3><input type="file" accept=".vcf,text/vcard" onchange="A.impFile(this,'vcf')"></div>
+  <div class="panel"><h3>CSV</h3><input type="file" accept=".csv,text/csv" onchange="A.impFile(this,'csv')"><p class="muted small">Columns detected by header: name (or first/last name), phone, email, city, state, notes.</p><button class="btn" onclick="A.impSample()">Load a sample messy list</button></div>
+  <div class="panel"><h3>Google Contacts</h3><button class="btn" onclick="toast('Google Contacts is not connected in this prototype. Connection lives in Settings once OAuth is set up.')">Connect Google Contacts</button></div>`;
+ if(s===2||s===3){const rows=IMP.rows;const low=rows.filter(r=>r.gate!=='act');body=`<h2>Step ${s}: ${s===2?'Preview parsed results':'Confirm or edit low-confidence rows'}</h2><p class="muted small">Jev gates: 85% and above act automatically, 60 to 85% ask you, below 60% go to the review queue after import.</p>
+  <div class="tw"><table><tr><th>Original</th><th>Name</th><th>City</th><th>State</th><th>Roles</th><th>Person or business</th><th>Confidence</th><th>Duplicate</th></tr>${(s===3?rows.map((r,i)=>[r,i]).filter(([r])=>r.gate!=='act'):rows.map((r,i)=>[r,i])).map(([r,i])=>`<tr><td class="small">${esc(r.raw)}</td>${s===3?`<td><input value="${esc(r.name)}" onchange="A.impEdit(${i},'name',this.value)"></td><td><input value="${esc(r.city)}" size="10" onchange="A.impEdit(${i},'city',this.value)"></td><td><input value="${esc(r.state)}" size="3" onchange="A.impEdit(${i},'state',this.value)"></td><td><select multiple size="3" onchange="A.impRoles(${i},this)">${ROLES_DEFAULT.map(x=>`<option ${r.roles.includes(x)?'selected':''}>${esc(x)}</option>`).join('')}</select></td><td><select onchange="A.impEdit(${i},'isBusiness',this.value==='b')">${opt('p','Person',r.isBusiness?'b':'p')}${opt('b','Business',r.isBusiness?'b':'p')}</select></td>`:`<td>${esc(r.name)}</td><td>${esc(r.city)}</td><td>${esc(r.state)}</td><td>${esc(r.roles.join(', '))}</td><td>${r.isBusiness?'Business':'Person'}</td>`}<td class="${r.conf<.6?'conf-low':r.conf<.85?'conf-mid':''}">${Math.round(r.conf*100)}% (${r.gate})</td><td>${r.dup?`${esc(byId('contacts',r.dup.id)?.name)} (${r.dup.why})<br><select onchange="A.impEdit(${i},'action',this.value)">${opt('merge','Merge',r.action)}${opt('import','Import as new',r.action)}${opt('skip','Skip',r.action)}</select>`:'<span class="muted">None</span>'}</td></tr>`).join('')}</table></div>
+  ${s===2?`<p>${low.length} of ${rows.length} rows are below 85% confidence.</p><button class="btn" onclick="A.impReset()">Start over</button><button class="btn primary" onclick="A.impStep(${low.length?3:4})">${low.length?'Next: review low-confidence rows':'Next: import'}</button>`:`<p class="muted small">Editing a row marks it as confirmed by you.</p><button class="btn" onclick="A.impStep(2)">Back</button><button class="btn primary" onclick="A.impStep(4)">Next: import</button>`}`}
+ if(s===4){const rows=IMP.rows;const n=a=>rows.filter(r=>r.action===a).length;body=`<h2>Step 4: Import</h2><p>${n('import')} new, ${n('merge')} merged into existing, ${n('skip')} skipped. ${rows.filter(r=>r.gate==='review'&&r.action!=='skip').length} will go to the review queue.</p><div class="panel"><h3>Apply to everyone in this import (optional)</h3><div class="grid2"><label>${esc(fieldBy('customer')?.label||'Customer status')}<select onchange="IMP.applyCustomer=this.value">${opt('','Leave blank',IMP.applyCustomer)}${(fieldBy('customer')?.options||[]).map(o=>opt(o,o,IMP.applyCustomer)).join('')}</select></label><fieldset><legend>Add roles</legend>${(fieldBy('roles')?.options||ROLES_DEFAULT).map(r=>`<label class="chk"><input type="checkbox" ${(IMP.applyRoles||[]).includes(r)?'checked':''} onchange="IMP.applyRoles=[...document.querySelectorAll('.aroles:checked')].map(x=>x.value)" class="aroles" value="${esc(r)}">${esc(r)}</label>`).join('')}</fieldset></div><p class="muted small">Importing a customer list? Set Customer status to Customer here and every row is tagged in one step.</p></div><p class="muted small">Imported contacts have no recorded consent. From the app they get one-to-one messages only; you can still reach them from your own phone or email.</p><button class="btn" onclick="A.impStep(2)">Back</button><button class="btn primary" onclick="A.impCommit()">Import contacts</button>`}
+ return shell('Import contacts',`<p><a href="#/contacts">Contacts</a></p>${body}`,'contacts')};
+
+/* ============ TRIP MODE ============ */
+V.trip=q=>{const all=mine('contacts');const city=q.city||'';const list=city?all.filter(c=>(c.city||'').toLowerCase()===city.toLowerCase()):[];const by={};list.forEach(c=>(c.roles.length?c.roles:['no role']).forEach(r=>(by[r]=by[r]||[]).push(c)));Object.values(by).forEach(a=>a.sort((x,y)=>(y.rating||0)-(x.rating||0)));const first=[...list].sort((a,b)=>JEV.tripScore(b)-JEV.tripScore(a)).slice(0,3);const cities=[...new Set(all.map(c=>c.city).filter(Boolean))].sort();
+ return shell('Trip Mode',`<p><a href="#/contacts">Contacts</a></p><form class="panel" onsubmit="A.trip(event)"><div class="grid2"><label>City<input name="city" list="citylist" value="${esc(city)}" required><datalist id="citylist">${cities.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label><label>From<input type="date" name="from" value="${esc(q.from||'')}"></label><label>To<input type="date" name="to" value="${esc(q.to||'')}"></label><label>Purpose (optional)<input name="purpose" value="${esc(q.purpose||'')}"></label></div><button class="btn primary">Find contacts</button></form>
+ ${city?(list.length?`<div class="note">Jev suggests contacting first: ${first.map(c=>esc(c.name)).join(', ')} (rating, tier, and consent).</div>${Object.entries(by).map(([r,cs])=>`<h2>${esc(r)} (${cs.length})</h2>${cs.map(c=>`<label class="chk" style="display:flex"><input type="checkbox" class="tsel" value="${c.id}">${esc(c.name)} , rating ${c.rating||'none'}, ${esc(c.relationship_tier||'no tier')}, consent ${c.consent_status}</label>`).join('')}`).join('')}<p><button class="btn primary" onclick="A.tripMsg('${esc(city)}','${esc(q.from||'')}','${esc(q.to||'')}')">Message selected</button></p>`:`<p class="muted">No contacts in ${esc(city)}.</p>`):''}`,'contacts')};
+/* ============ MESSAGES ============ */
+let MS=null;
+function msInit(q){const key=JSON.stringify(q);if(MS&&MS.key===key)return;const u=me();MS={key,f:q.city?{city:[q.city]}:{},ids:q.ids?q.ids.split(',').filter(Boolean):[],event:q.event||'',today:!!q.today,pending:!!q.pending,channel:q.channel||'email',template_id:'',subject:'',body:'',when:'now',at:'',emailMode:'app',smsMode:u.settings.smsReg==='approved'?'app':'phone',bcc:u.settings.email.bcc,done:new Set()}}
+function msRecipients(){let list=mine('contacts');const t=todayStr();
+ if(MS.ids.length)list=list.filter(c=>MS.ids.includes(c.id));else{list=applyFilters(list,MS.f);if(MS.event)list=list.filter(c=>c.events_met.includes(MS.event));if(MS.today){const ids=new Set(DB.submissions.filter(s=>(!MS.event||s.event_id===MS.event)&&dstr(s.created_at)===t).map(s=>s.contact_id));list=list.filter(c=>ids.has(c.id))}if(MS.pending){const p=new Set(pendingFollowups().map(c=>c.id));list=list.filter(c=>p.has(c.id))}}
+ const viaApp=MS.channel==='email'?MS.emailMode==='app':MS.smsMode==='app';const bulk=list.length>1&&viaApp,ok=[],ex=[];
+ list.forEach(c=>{if(c.consent_status==='revoked')ex.push([c,'opted out']);else if(bulk&&c.consent_status!=='granted')ex.push([c,'no consent for bulk sends from the app']);else if(MS.channel==='sms'&&!c.phone)ex.push([c,'no phone']);else if(MS.channel==='email'&&!c.email)ex.push([c,'no email']);else ok.push(c)});return{ok,ex,bulk}}
+function merge(text,c,evId){const u=me();const ev=byId('events',evId||(c&&c.events_met[c.events_met.length-1])||'');const mc=mainCard(u);return String(text||'').replace(/\{first_name\}/g,c?firstName(c.name):'there').replace(/\{event\}/g,ev?ev.name:'the event').replace(/\{role\}/g,c?(c.roles[0]||''):'').replace(/\{note\}/g,c?(c.intake_note||''):'').replace(/\{card_link\}/g,mc?cardUrl(mc):'')}
+function finalBody(body,channel,bulk){return channel==='email'?body+'\n\n--\nUnsubscribe: [one-click unsubscribe link]':bulk?body+'\nReply STOP to opt out.':body}
+const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const e164=p=>{const d=String(p||'').replace(/\D/g,'');return d.length===10?'+1'+d:d.length===11&&d[0]==='1'?'+'+d:(String(p).trim().startsWith('+')?'+'+d:d)};
+function smsHref(nums,body){const n=nums.map(e164).filter(Boolean);const b=body?encodeURIComponent(body):'';if(n.length>1)return isIOS()?`sms://open?addresses=${n.join(',')}${b?'&body='+b:''}`:`sms:${n.join(',')}${b?'?body='+b:''}`;return`sms:${n[0]||''}${b?(isIOS()?'&':'?')+'body='+b:''}`}
+function sendAs(u){return`${u.settings.email.fromName||u.name} <${u.username}@mail.goldex.link>`}
+V.messages=q=>{const tab=q.tab||'send',u=me();msInit(q);const T=mine('templates');let body='';
+ if(tab==='send'){const R=msRecipients();const first=R.ok[0];const E=MS.channel==='email';
+  const delivery=E?`<div class="seg"><button class="${MS.emailMode==='app'?'on':''}" onclick="A.msSet('emailMode','app')">Send through Goldex</button><button class="${MS.emailMode==='mailto'?'on':''}" onclick="A.msSet('emailMode','mailto')">Open in my email app</button></div>
+   ${MS.emailMode==='app'?`<div class="kv"><span>From</span><b>${esc(sendAs(u))}</b><span>Reply-To</span><b>${esc(u.settings.email.replyTo||u.email)}</b><span>Delivery</span><b>One personal email per person, merge fields filled in</b></div><label class="chk"><input type="checkbox" ${MS.bcc?'checked':''} onchange="MS.bcc=this.checked">BCC me a copy of every email (${esc(u.settings.email.replyTo||u.email)})</label><p class="muted small">Replies go straight to your inbox through Reply-To. Change sender name and reply address in Settings.</p>`
+   :`<p class="muted small">Opens your own mail app with everyone in BCC so no one sees the list. Merge fields fill with generic text because it is one shared email.</p><div class="row"><a class="btn primary" href="${esc(mailtoAll(R.ok))}" onclick="A.phoneLog('email')">Open in my email app (${R.ok.length})</a><button class="btn" onclick="copyText('${esc(R.ok.map(c=>c.email).join(', '))}')">Copy all emails</button></div>`}`
+  :`<div class="seg"><button class="${MS.smsMode==='phone'?'on':''}" onclick="A.msSet('smsMode','phone')">Send from my phone</button><button class="${MS.smsMode==='app'?'on':''}" onclick="A.msSet('smsMode','app')" ${u.settings.smsReg==='approved'?'':'disabled title="Needs SMS registration in Settings"'}>Send through Goldex</button></div>
+   ${MS.smsMode==='phone'?`<p class="muted small">Goldex builds the list and the message; your own phone sends it.</p>
+   <div class="row"><button class="btn" onclick="copyText('${esc(R.ok.map(c=>e164(c.phone)).join(', '))}')">Copy ${R.ok.length} numbers</button><button class="btn" onclick="copyText(document.getElementById('mprev').textContent)">Copy message</button><a class="btn" href="${esc(smsHref(R.ok.map(c=>c.phone),merge(MS.body,null,MS.event)))}" onclick="A.phoneLog('group')">Open as group text</a><button class="btn" onclick="A.shareOut()">Share to another app</button><button class="btn primary" onclick="A.phoneLog('manual')">Log as sent</button></div>
+   <details ${R.ok.length<=25?'open':''}><summary>One by one (personal, with each name filled in)</summary><ul class="queue">${R.ok.map(c=>{const m=merge(MS.body,c,MS.event);return`<li class="${MS.done.has(c.id)?'done':''}"><span>${esc(c.name)}</span><span class="muted small">${esc(e164(c.phone))}</span><span class="spacer"></span><a class="btn" href="${esc(smsHref([c.phone],m))}" onclick="A.phoneOne('${c.id}')">Text</a><a class="btn" href="https://wa.me/${e164(c.phone).replace('+','')}?text=${encodeURIComponent(m)}" target="_blank" rel="noopener" onclick="A.phoneOne('${c.id}')">WhatsApp</a></li>`}).join('')}</ul></details>
+   <p class="muted small">Group text works best for small groups. Group replies go to everyone in the thread, so one by one is the safer default.</p>`:''}`;
+  body=`${!E&&u.settings.smsReg!=='approved'?'<div class="note">In-app texting unlocks after SMS sender registration (Settings). Until then, texts go out from your own phone.</div>':''}
+  <section class="panel"><h2>Who</h2>${MS.ids.length?`<p>${MS.ids.length} contact${MS.ids.length>1?'s':''} picked. <button class="btn" onclick="A.msClearIds()">Use filters instead</button></p>`:`${MS.event?`<p class="row"><span class="chip on">Event: ${esc(byId('events',MS.event)?.name||'')}${MS.today?', today':''}</span><button class="link" onclick="A.msSet('event','');A.msSet('today',false)">Clear</button></p>`:''}${MS.pending?`<p class="row"><span class="chip on">Pending follow-ups</span><button class="link" onclick="A.msSet('pending',false)">Clear</button></p>`:''}${segmentFilters(MS.f,'A.msf')}`}
+  <p><b>${R.ok.length}</b> recipient${R.ok.length===1?'':'s'}${R.ex.length?`, ${R.ex.length} left out: ${R.ex.slice(0,5).map(([c,r])=>esc(c.name)+' ('+r+')').join(', ')}${R.ex.length>5?'...':''}`:''}</p></section>
+  <section class="panel"><h2>Message</h2><div class="seg"><button class="${E?'on':''}" onclick="A.msSet('channel','email')">Email</button><button class="${!E?'on':''}" onclick="A.msSet('channel','sms')">Text</button></div>
+  <label>Template<select onchange="A.msTpl(this.value)">${opt('','Write new',MS.template_id)}${T.map(t=>opt(t.id,t.name+' ('+t.channel+')',MS.template_id)).join('')}</select></label>
+  ${E?`<label>Subject<input id="msubj" value="${esc(MS.subject)}" oninput="MS.subject=this.value;A.msPrev()"></label>`:''}
+  <label>Message<textarea id="mbody" oninput="MS.body=this.value;A.msPrev()">${esc(MS.body)}</textarea></label><div class="chips">${['first_name','event','role','note','card_link'].map(k=>`<button class="chip" onclick="A.msIns('{${k}}')">{${k}}</button>`).join('')}</div>
+  <h3>Preview${first?' for '+esc(first.name):''}</h3><pre id="mprev">${first?esc((E?'Subject: '+merge(MS.subject,first,MS.event)+'\n\n':'')+finalBody(merge(MS.body,first,MS.event),MS.channel,R.bulk&&(E||MS.smsMode==='app'))):'No recipients.'}</pre></section>
+  <section class="panel"><h2>Send</h2>${delivery}
+  ${(E&&MS.emailMode==='app')||(!E&&MS.smsMode==='app')?`<p class="row"><label class="inl"><input type="radio" name="when" ${MS.when==='now'?'checked':''} onchange="A.msSet('when','now')">Send now</label><label class="inl"><input type="radio" name="when" ${MS.when==='later'?'checked':''} onchange="A.msSet('when','later')">Schedule</label>${MS.when==='later'?`<input type="datetime-local" value="${esc(MS.at)}" onchange="MS.at=this.value">`:''}</p><button class="btn primary" onclick="A.msSend()" ${R.ok.length?'':'disabled'}>${MS.when==='now'?'Send':'Schedule'} to ${R.ok.length}</button><p class="muted small">Prototype: sends are logged to History. Nothing leaves the app until the email service is connected.</p>`:''}</section>`}
+ if(tab==='automations'){const L=limits(u);body=`${L.automations?'':'<div class="banner">Automations are a Pro feature. Change plan in Settings to test.</div>'}<p class="muted small">Automations only send to contacts with recorded consent. In production they run on a server schedule; here, use "Run now" to test who would receive each one.</p>
+  <div class="tw"><table><tr><th>On</th><th>Trigger</th><th>Filter</th><th>Template</th><th>Send time</th><th></th></tr>${mine('automations').map(a=>`<tr><td><input type="checkbox" aria-label="Active" ${a.active?'checked':''} ${L.automations?'':'disabled'} onchange="A.autoToggle('${a.id}',this.checked)"></td><td>${esc(TRIGGERS[a.trigger])}</td><td class="small">${esc(Object.entries(a.filter).filter(([,v])=>v).map(([k,v])=>k+': '+(k==='event'?byId('events',v)?.name:v)).join(', ')||'All consented')}</td><td>${esc(byId('templates',a.template_id)?.name||'')}</td><td>${esc(a.send_time)}</td><td><button class="btn" ${L.automations?'':'disabled'} onclick="A.runAuto('${a.id}')">Run now</button><button class="btn danger" onclick="A.delAuto('${a.id}')">Delete</button></td></tr>`).join('')}</table></div>
+  <form class="panel" onsubmit="A.addAuto(event)"><h2>Create rule</h2><div class="grid2"><label>Trigger<select name="trigger">${Object.entries(TRIGGERS).map(([k,v])=>opt(k,v)).join('')}</select></label><label>Template<select name="template_id" required>${T.map(t=>opt(t.id,t.name)).join('')}</select></label><label>Send time<input type="time" name="send_time" value="18:00"></label><label>Filter: tier<select name="tier">${opt('','Any')}${['Gold','Silver','Bronze'].map(x=>opt(x)).join('')}</select></label><label>Filter: role<select name="role">${opt('','Any')}${ROLES_DEFAULT.map(x=>opt(x)).join('')}</select></label><label>Filter: city<input name="city"></label><label>Filter: event<select name="event">${opt('','Any')}${mine('events').map(e=>opt(e.id,e.name)).join('')}</select></label></div><button class="btn primary" ${L.automations?'':'disabled'}>Create rule</button></form>`}
+ if(tab==='templates')body=`${T.map(t=>`<form class="panel" onsubmit="A.saveTpl(event,'${t.id}')"><div class="grid2"><label>Name<input name="name" value="${esc(t.name)}" required></label><label>Channel<select name="channel">${opt('sms','SMS',t.channel)}${opt('email','Email',t.channel)}</select></label></div><label>Subject (email)<input name="subject" value="${esc(t.subject)}"></label><label>Body<textarea name="body">${esc(t.body)}</textarea></label><button class="btn primary">Save template</button><button type="button" class="btn danger" onclick="A.delTpl('${t.id}')">Delete</button></form>`).join('')}<button class="btn" onclick="A.newTpl()">New template</button><p class="muted small">Merge fields: {first_name} {event} {role} {note} {card_link}</p>`;
+ if(tab==='history'){const M=mine('messages').sort((a,b)=>(b.sent_at||b.scheduled_at||'').localeCompare(a.sent_at||a.scheduled_at||''));body=`<div class="tw"><table><tr><th>When</th><th>Type</th><th>Channel</th><th>Segment</th><th>Sent</th><th>Excluded</th><th>Status</th></tr>${M.map(m=>`<tr><td>${fmtDT(m.sent_at||m.scheduled_at)}</td><td>${esc(m.kind)}</td><td>${m.channel}</td><td class="small">${esc(m.segment_filter)}</td><td>${m.sent_count}</td><td>${m.excluded_count||0}</td><td>${m.status}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">No messages yet.</td></tr>'}</table></div><p class="muted small">Delivery counts are simulated until an SMS provider and email service are connected.</p>
+  <form class="panel" onsubmit="A.reply(event)"><h2>Test an inbound reply</h2><p class="muted small">STOP-type replies are handled in code first and revoke consent instantly. Everything else goes to Jev for classification.</p><label>From contact<select name="cid">${mine('contacts').map(c=>opt(c.id,c.name)).join('')}</select></label><label>Reply text<input name="text" required placeholder="e.g., STOP, or Tuesday works for me"></label><button class="btn primary">Classify reply</button></form>
+  ${DB.replies.filter(r=>r.user_id===u.id).length?`<h3>Replies</h3><ul>${DB.replies.filter(r=>r.user_id===u.id).slice().reverse().map(r=>`<li>${esc(byId('contacts',r.contact_id)?.name||'')}: "${esc(r.text)}" : ${esc(r.label)} (${r.by==='code'?'code':'Jev '+Math.round(r.conf*100)+'%'})</li>`).join('')}</ul>`:''}`}
+ const tl=k=>`<a href="#/messages?tab=${k}" class="${tab===k?'on':''}">${{send:'Send',automations:'Automations',templates:'Templates',history:'History'}[k]}</a>`;
+ return shell('Messages',`<div class="tabs">${['send','automations','templates','history'].map(tl).join('')}</div>${body}`,'messages')};
+function mailtoAll(list){const u=me();const bcc=list.map(c=>c.email).join(',');return`mailto:${encodeURIComponent(u.settings.email.replyTo||u.email)}?bcc=${encodeURIComponent(bcc)}&subject=${encodeURIComponent(merge(MS.subject,null,MS.event))}&body=${encodeURIComponent(finalBody(merge(MS.body,null,MS.event),'sms',false))}`}
+function autoTargets(a){const cs=mine('contacts').filter(c=>c.consent_status==='granted');const f=a.filter||{};let list=cs.filter(c=>(!f.tier||c.relationship_tier===f.tier)&&(!f.role||c.roles.includes(f.role))&&(!f.city||(c.city||'').toLowerCase()===f.city.toLowerCase())&&(!f.event||c.events_met.includes(f.event)));const md=todayStr().slice(5);
+ switch(a.trigger){case'daily_followup':{const p=new Set(pendingFollowups().map(c=>c.id));return list.filter(c=>p.has(c.id))}case'birthday':return list.filter(c=>(c.birthday||'').slice(5)===md);case'reengage':return list.filter(c=>c.relationship_tier==='Gold'&&(lastMessageTo(c.id)||c.created_at)<new Date(Date.now()-90*864e5).toISOString());default:return list}}
+function processScheduled(){if(!DB)return;let n=0;DB.messages.forEach(m=>{if(m.status==='scheduled'&&m.scheduled_at<=nowISO()){m.status='sent';m.sent_at=nowISO();n++}});if(n){persist();toast(n+' scheduled message(s) sent (simulated)')}}
+
+/* ============ NFC TAGS ============ */
+V.tags=()=>{const ts=mine('tags');return shell('NFC Tags',`<p><a class="btn primary" href="#/order">Order NFC Stickers</a><button class="btn" onclick="A.writeTag()">Write to my own sticker</button><button class="btn" onclick="A.claim()">Claim a tag</button><a class="btn" href="#/manifest">Vendor manifest</a></p>
+ ${ts.length?`<div class="tw"><table><tr><th>Tag ID</th><th>Short link</th><th>Points to</th><th>Status</th><th>Scans</th><th>Last scan</th></tr>${ts.map(t=>`<tr class="click" onclick="go('#/tags/${t.id}')"><td>${t.id}${t.label?'<br><span class="small muted">'+esc(t.label)+'</span>':''}</td><td class="small">${esc(tagUrl(t))}</td><td>${esc(destLabel(t.points_to))}</td><td>${t.status}</td><td>${t.scan_count}</td><td>${fmtDT(t.last_scan_at)}</td></tr>`).join('')}</table></div>`:'<p class="muted">No tags yet. Order stickers or write your own.</p>'}`,'tags')};
+V.tagDetail=id=>{const t=byId('tags',id),u=me();if(!t||t.user_id!==u.id)return notFound('Tag not found.');const sc=DB.scans.filter(s=>s.tag_id===id).sort((a,b)=>b.timestamp.localeCompare(a.timestamp));const cur=t.points_to?`${t.points_to.kind}:${t.points_to.id}`:'';
+ return shell(null,`<p><a href="#/tags">NFC Tags</a> / ${t.id}</p><h1>Tag ${t.id} ${badge(t.status)}</h1><p>Short link: <code>${esc(tagUrl(t))}</code> <a class="btn" href="#/t/${t.id}">Test tap</a></p>${t.uid?`<p class="small muted">UID ${esc(t.uid)}${t.order_id?' , order '+esc(t.order_id):''}</p>`:''}
+ <div class="panel"><label>Name<input value="${esc(t.label)}" placeholder="e.g., Badge sticker" onchange="A.tagSet('${id}','label',this.value)"></label>
+ <label>Opens<select onchange="A.tagPoint('${id}',this.value)">${opt('','Not set',cur)}${mine('cards').map(c=>opt('card:'+c.id,'Card: '+c.name+(c.status==='live'?'':' (draft)'),cur)).join('')}${mine('events').map(e=>opt('event:'+e.id,'Event: '+e.name,cur)).join('')}</select></label>
+ ${t.status==='disabled'?`<button class="btn" onclick="A.tagSet('${id}','status','active',1)">Enable</button>`:`<button class="btn" onclick="A.tagSet('${id}','status','disabled',1)">Disable</button>`}</div>
+ <h2>Scans (${sc.length})</h2>${sc.length?`<ul>${sc.map(s=>`<li>${fmtDT(s.timestamp)} , ${esc(s.city||'unknown city')}</li>`).join('')}</ul>`:'<p class="muted">No scans yet.</p>'}`,'tags')};
+V.order=q=>{const u=me();const d=q.card?'card:'+q.card:q.event?'event:'+q.event:(mainCard(u)?'card:'+mainCard(u).id:'');
+ return shell('Order NFC Stickers',`<form onsubmit="A.placeOrder(event)"><section class="panel"><h2>Color</h2><label class="inl"><input type="radio" name="color" value="black" checked>Black</label><label class="inl"><input type="radio" name="color" value="white">White</label></section>
+ <section class="panel"><h2>Quantity</h2>${Object.entries(PRICES).map(([n,p],i)=>`<label class="inl"><input type="radio" name="qty" value="${n}" ${i===1?'checked':''} onchange="$('#paybtn').textContent='Pay '+money(${p})+' (test mode)'">${n} stickers, ${money(p)}</label>`).join('')}<p class="muted small">US shipping included. Proposed prices pending vendor quotes.</p></section>
+ <section class="panel"><h2>What they open by default</h2><select name="dest" required>${mine('cards').map(c=>opt('card:'+c.id,'Card: '+c.name,d)).join('')}${mine('events').map(e=>opt('event:'+e.id,'Event: '+e.name,d)).join('')}</select><p class="muted small">Changeable later from My Tags.</p></section>
+ <section class="panel"><h2>Shipping address</h2><div class="grid2"><label>Full name<input name="name" value="${esc(u.name)}" required></label><label>Address<input name="line1" required></label><label>City<input name="city" required></label><label>State<input name="state" required maxlength="2"></label><label>ZIP<input name="zip" required pattern="[0-9]{5}"></label></div></section>
+ <section class="panel"><h2>Pay</h2><button class="btn primary" id="paybtn">Pay ${money(PRICES[10])} (test mode)</button><button type="button" class="btn" onclick="toast('Apple Pay needs Stripe keys and a verified domain. Use the test button to continue.')">Apple Pay</button><p class="muted small">Stripe is not connected. The test button creates the order without charging.</p></section></form>`,'tags')};
+V.orderDone=id=>{const o=byId('orders',id);if(!o||o.user_id!==me().id)return notFound('Order not found.');const ts=DB.tags.filter(t=>t.order_id===id);return shell('Order confirmed',`<div class="panel"><p>Order number <b>${o.id}</b></p><p>${o.quantity} ${o.color} stickers, ${money(o.price)}</p><p>Estimated delivery: ${fmtD(o.est_delivery)}</p><p>Status: ${o.status}${o.tracking_number?' , tracking '+esc(o.tracking_number):''}</p></div><p>${ts.length} tags now appear in My Tags as ${ts[0]?.status||'ordered'}. Status updates flow in from the vendor manifest.</p><a class="btn primary" href="#/tags">Go to My Tags</a><a class="btn" href="#/manifest">Open vendor manifest</a>`,'tags')};
+V.manifest=()=>{const os=mine('orders').sort((a,b)=>b.created_at.localeCompare(a.created_at));return shell('Vendor manifest',`<p><a href="#/tags">NFC Tags</a></p><div class="note">This screen stands in for the shared vendor sheet (Section 7.3). Goldex writes the order columns; the vendor writes UID, encoded date, tracking, and status. Use the vendor buttons to simulate their updates, or export and re-import a CSV.</div>
+ <p><button class="btn" onclick="A.exportManifest()">Export manifest CSV</button><label class="btn">Import vendor CSV<input type="file" accept=".csv" hidden onchange="A.importManifest(this)"></label></p>
+ ${os.map(o=>{const ts=DB.tags.filter(t=>t.order_id===o.id);return`<section class="panel"><h2>${o.id} , ${o.quantity} ${o.color} , ${o.status}</h2><p class="small">Ship to ${esc(o.shipping_address.name)}, ${esc(o.shipping_address.line1)}, ${esc(o.shipping_address.city)} ${esc(o.shipping_address.state)} ${esc(o.shipping_address.zip)}${o.tracking_number?' , tracking '+esc(o.tracking_number):''}</p>
+ <p>Vendor: <button class="btn" onclick="A.vendor('${o.id}','encoded')" ${o.status==='ordered'?'':'disabled'}>Mark encoded</button><button class="btn" onclick="A.vendor('${o.id}','shipped')" ${o.status==='encoded'?'':'disabled'}>Mark shipped</button><button class="btn" onclick="A.vendor('${o.id}','delivered')" ${o.status==='shipped'?'':'disabled'}>Mark delivered (await first tap)</button><button class="btn" onclick="A.vendor('${o.id}','delivered_active')" ${o.status==='shipped'?'':'disabled'}>Mark delivered (auto-activate)</button></p>
+ <div class="tw"><table><tr><th>tag_id</th><th>url_to_encode</th><th>color</th><th>tag_uid</th><th>encoded_at</th><th>status</th></tr>${ts.map(t=>`<tr><td>${t.id}</td><td class="small">${esc(tagUrl(t))}</td><td>${o.color}</td><td class="small">${esc(t.uid)}</td><td>${esc(t.encoded_at||'')}</td><td>${t.status}</td></tr>`).join('')}</table></div></section>`}).join('')||'<p class="muted">No orders yet.</p>'}`,'tags')};
+
+/* ============ SETTINGS ============ */
+V.settings=()=>{const u=me(),L=limits(u),s=u.settings;const inp=(k,l,t='text')=>`<label>${l}<input name="${k}" type="${t}" value="${esc(u[k])}"></label>`;
+ return shell('Settings',`<form class="panel" onsubmit="A.saveProfile(event)"><h2>Profile</h2>${u.photo?`<img src="${u.photo}" alt="" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`:''}<label>Profile photo<input type="file" accept="image/*" onchange="A.userPhoto(this,'#/settings')"></label><div class="grid2">${inp('name','Name')}${inp('title','Title')}${inp('company','Company')}${inp('phone','Phone','tel')}${inp('email','Email (login)','email')}${inp('website','Website')}${inp('booking','Booking link')}${inp('instagram','Instagram')}${inp('x','X')}${inp('linkedin','LinkedIn')}${inp('tiktok','TikTok')}${inp('youtube','YouTube')}<label>Username (in card links)<input name="username" value="${esc(u.username)}" pattern="[a-z0-9\\-]+" required></label></div>
+ <h3>Your fields</h3><p class="muted small">Add anything the standard list misses: a second website, a Cash App, a press kit, an assistant's line. Each one can be shown on any card and saves into the receiver's phone with the label you give it.</p>
+ ${(u.custom_fields||[]).map(f=>`<div class="row cfrow"><input value="${esc(f.label)}" aria-label="Field name" placeholder="Label" onchange="A.pfSet('${f.id}','label',this.value)"><select aria-label="Type" onchange="A.pfSet('${f.id}','kind',this.value)">${[['url','Link'],['phone','Phone'],['email','Email'],['text','Text']].map(([v,l])=>opt(v,l,f.kind)).join('')}</select><input value="${esc(f.value)}" aria-label="Value" placeholder="Value" onchange="A.pfSet('${f.id}','value',this.value)" style="flex:1;min-width:180px"><button type="button" class="btn danger" onclick="A.pfDel('${f.id}')">Remove</button></div>`).join('')}
+ <p><button type="button" class="btn" onclick="A.pfAdd()">Add a field</button></p><button class="btn primary">Save profile</button></form>
+ <section class="panel"><h2>Save Contact format</h2><p class="muted small">"Save Contact" on any card downloads a vCard (.vcf) built from that card's visible fields. iPhone opens it directly in Contacts with photo, title, company, phone, email, and each link labeled the way you named it (Website, Instagram, Book a call). Android and desktop import it the same way.</p>${mainCard(u)?`<button class="btn" onclick="modal('<h2>vCard preview</h2><pre>'+esc(vcardOf(mainCard(me())).replace(/PHOTO;[^\r\n]+/,'PHOTO: (embedded image)'))+'</pre>')">Preview my vCard</button>`:''}</section>
+ <section class="panel"><h2>Plan and billing</h2><p>Current plan: <b>${L.name}</b></p><label>Switch plan (test mode, no charge)<select onchange="A.plan(this.value)">${opt('free','Free: 1 card, 1 event, 100 contacts, presets only, footer',u.plan)}${opt('pro','Pro: $9.99/mo or $79/yr',u.plan)}${opt('events','Events: $29/mo',u.plan)}${opt('founding','Founding Member: $99 once',u.plan)}</select></label><p>Living Portrait credits: ${u.credits.portrait} <button class="btn" onclick="A.credits()">Add 3 credits (test)</button></p><p class="muted small">Jev usage this month: ${u.jev.used} of ${L.jevCap}. iOS subscriptions go through Apple in-app purchase; web and stickers through Stripe.</p></section>
+ <section class="panel"><h2>Appearance</h2><div class="seg">${['auto','light','dark'].map(t=>`<button class="${curTheme()===t?'on':''}" onclick="A.theme('${t}')">${{auto:'Match system',light:'Light',dark:'Dark'}[t]}</button>`).join('')}</div></section>
+ <section class="panel"><h2>Notifications</h2>${[['scans','New taps and scans'],['submissions','New intake submissions'],['orders','Sticker order updates'],['digest','Daily digest email']].map(([k,l])=>`<label class="chk" style="display:flex"><input type="checkbox" ${s.notif[k]?'checked':''} onchange="A.notif('${k}',this.checked)">${l}</label>`).join('')}</section>
+ <section class="panel"><h2>Connected accounts</h2><p>Google Contacts: ${s.connected.google_contacts?'Connected':'Not connected'} <button class="btn" onclick="A.connect('google_contacts')">${s.connected.google_contacts?'Disconnect':'Connect'}</button></p><p>Google Sheets sync: ${s.connected.google_sheets?'Connected':'Not connected'} <button class="btn" onclick="A.connect('google_sheets')">${s.connected.google_sheets?'Disconnect':'Connect'}</button></p><p class="muted small">Connection toggles are simulated. Real OAuth is Phase 3 and 4.</p></section>
+ <section class="panel"><h2>Messaging setup</h2><p>SMS sender registration (A2P 10DLC): <b>${{not_started:'Not started',pending:'Pending review',approved:'Approved (simulated)'}[s.smsReg]}</b></p>${s.smsReg==='not_started'?'<button class="btn" onclick="A.smsReg(\'pending\')">Start registration</button>':s.smsReg==='pending'?'<button class="btn" onclick="A.smsReg(\'approved\')">Simulate approval</button>':''}</section>
+ <section class="panel"><h2>Email sending</h2><div class="grid2"><label>Sender name<input value="${esc(s.email.fromName||u.name)}" onchange="A.emailSet('fromName',this.value)"></label><label>Replies go to<input type="email" value="${esc(s.email.replyTo||u.email)}" onchange="A.emailSet('replyTo',this.value)"></label></div><label class="chk"><input type="checkbox" ${s.email.bcc?'checked':''} onchange="A.emailSet('bcc',this.checked)">BCC me on every send by default</label><div class="kv"><span>Sends from</span><b>${esc(sendAs(u))}</b><span>Domain status</span><b>Shared Goldex domain (authenticated in production). Custom domain available later.</b></div></section>
+ <section class="panel"><h2>Export</h2><button class="btn" onclick="A.exportContacts()">Export contacts CSV</button><button class="btn" onclick="A.exportSubs()">Export submissions CSV</button></section>
+ <section class="panel"><h2>Prototype controls</h2><label>Link domain used in links and QR codes<input value="${esc(s.linkBase)}" onchange="A.linkBase(this.value)"></label><p><a class="btn" href="#/onboarding?step=1" onclick="me().onboarded=false;persist()">Replay onboarding</a><button class="btn" onclick="A.resetDemo()">Reset demo data</button><button class="btn" onclick="A.clearDemo()">Clear demo data (keep account)</button></p></section>
+ <section class="panel"><h2>Delete account</h2><p class="muted small">Removes your cards, events, contacts, tags, and messages from this browser.</p><button class="btn danger" onclick="A.deleteAccount()">Delete account</button></section>`,'settings')};
+
+/* ============ PUBLIC (receiver) ============ */
+function pubBar(){const u=me();return`<div class="pubbar"><span>Receiver view (public page, no login)</span>${u?'<a href="#/home">Back to dashboard</a>':''}</div>`}
+const inactive=m=>`${pubBar()}<main class="pub"><h1>${esc(m||'This card is not available')}</h1><p class="muted">Check the link, or ask the owner for a new one.</p></main>`;
+V.pubCard=(un,slug,q)=>{const u=DB.users.find(x=>x.username===un);const c=u&&DB.cards.find(x=>x.user_id===u.id&&x.slug===slug);if(!c||c.status!=='live')return inactive();if(!q.nolog)logScan({card_id:c.id,source:['nfc','qr','link'].includes(q.src)?q.src:'link'});return`${pubBar()}<main class="pub">${cardHTML(c,{public:true})}</main>`};
+V.pubQR=(un,slug)=>{const u=DB.users.find(x=>x.username===un);const c=u&&DB.cards.find(x=>x.user_id===u.id&&x.slug===slug);if(!c||c.status!=='live')return inactive();return`${pubBar()}<main class="pub" style="background:#fff;min-height:90vh">${qrCardHTML(c)}</main>`};
+V.pubIntake=cid=>{const c=byId('cards',cid);if(!c||c.status!=='live')return inactive();const f=byId('forms',c.intake_form_id);if(!f)return inactive('This card has no intake form yet');return`${pubBar()}<main class="pub"><p><a href="${cardHash(c)}&nolog=1">Back to card</a></p>${intakeFormHTML(f,owner(c),{public:true,cardId:cid})}</main>`};
+V.pubTag=id=>{const t=byId('tags',id);if(!t||t.status==='disabled')return render(`${pubBar()}<main class="pub"><h1>This tag is not active</h1></main>`);if(t.status!=='active')t.status='active';const c=cardDest(t);t.scan_count++;t.last_scan_at=nowISO();logScan({tag_id:t.id,card_id:c?c.id:'',event_id:t.points_to?.kind==='event'?t.points_to.id:'',source:'nfc'});if(!c||c.status!=='live')return render(inactive('This tag does not point to a live card yet'));location.replace(`#/p/${owner(c).username}/${c.slug}?src=nfc&nolog=1`)};
+/* ============ ACTIONS ============ */
+const A={
+ /* auth */
+ login(e){e.preventDefault();const f=new FormData(e.target);const em=String(f.get('email')).trim().toLowerCase(),pw=String(f.get('password'));const u=DB.users.find(x=>x.email.toLowerCase()===em);if(!u||!(u.password===pw||(u.alt||[]).includes(pw))){toast('Email or password is incorrect.');return}DB.session={userId:u.id};persist();go(u.onboarded?'#/home':'#/onboarding')},
+ signup(e){e.preventDefault();const f=new FormData(e.target);const em=String(f.get('email')).trim().toLowerCase();if(DB.users.some(x=>x.email.toLowerCase()===em)){toast('An account with that email exists. Log in instead.');return}let un=slugify(em.split('@')[0])||'user',i=2;const base0=un;while(DB.users.some(x=>x.username===un))un=base0+i++;const u=newUser({name:String(f.get('name')).trim(),email:em,password:String(f.get('password')),username:un});DB.users.push(u);DB.session={userId:u.id};persist();go('#/onboarding')},
+ reset(e){e.preventDefault();toast('If that email has an account, a reset link is on its way (simulated: email service not connected).');setTimeout(()=>go('#/login'),1500)},
+ oauth(p){toast(`Sign in with ${p} needs OAuth credentials (Supabase Auth). Use email and password in this prototype.`)},
+ logout(){DB.session=null;persist();go('#/login')},
+ /* onboarding */
+ onb1(e){e.preventDefault();const f=new FormData(e.target),u=me();['name','title','company'].forEach(k=>u[k]=String(f.get(k)).trim());persist();go('#/onboarding?step=2')},
+ async userPhoto(inp,back){const file=inp.files[0];if(!file)return;if(file.size>10*1024*1024){toast('Photo must be 10 MB or smaller.');return}try{const u=me();const old=u.photo;u.photo=await readImage(file,400,true);DB.cards.filter(c=>c.user_id===u.id&&(!c.photo_url||c.photo_url===old)).forEach(c=>c.photo_url=u.photo);persist();route()}catch(err){toast(err.message)}},
+ onbCard(){const u=me();let c=DB.cards.find(x=>x.user_id===u.id);if(!c||mine('cards').length<limits(u).cards){c=newCard(u,{name:'My first card'});DB.cards.push(c);persist()}go(`#/cards/${c.id}/edit?step=1&from=onb`)},
+ finishOnb(keep){me().onboarded=true;persist();if(!keep)go('#/home')},
+ /* card builder */
+ pv(id){const c=byId('cards',id),el=$('#preview');if(el&&c){el.innerHTML=cardHTML(c);hydrate(el)}},
+ cset(id,path,val,full){const c=byId('cards',id);const ks=path.split('.');let o=c;while(ks.length>1)o=o[ks.shift()];o[ks[0]]=val;persist();full?route():A.pv(id)},
+ ctype(id,t){const c=byId('cards',id);c.type=t;if(TYPE_DEFAULTS[t])c.fields_shown=[...TYPE_DEFAULTS[t]];if(t==='Event'){const b=c.buttons.find(b=>b.kind==='intake');if(b)b.on=true}persist();route()},
+ async cardPhoto(inp,id){const file=inp.files[0];if(!file)return;if(file.size>10*1024*1024){toast('Photo must be 10 MB or smaller.');return}try{const c=byId('cards',id);c.photo_url=await readImage(file,400,true);c.portrait={generated:false,approved:false};if(!me().photo)me().photo=c.photo_url;persist();route()}catch(err){toast(err.message)}},
+ cbg(id,bg,full=1){byId('cards',id).bg=bg;persist();full?route():A.pv(id)},
+ async bgUpload(inp,id){const file=inp.files[0];if(!file)return;const u=me();try{if(/^image\/(jpeg|png)$/.test(file.type)){if(file.size>10*1024*1024)throw new Error('Images must be 10 MB or smaller.');const url=await readImage(file,1080,false);const up={id:'b_'+rid(),name:file.name,type:'image',url,is_preset:false,owner_id:u.id};DB.uploads.push(up);byId('cards',id).bg={kind:'upload',id:up.id}}else if(file.type==='video/mp4'){if(file.size>15*1024*1024)throw new Error('Video loops must be 15 MB or smaller.');const d=await videoDuration(file);if(!(d<=10.5))throw new Error(isNaN(d)?'Could not read the video.':`Video is ${d.toFixed(1)} seconds. The limit is 10 seconds.`);const up={id:'b_'+rid(),name:file.name,type:'video_loop',url:'',is_preset:false,owner_id:u.id};await IDB.put(up.id,file);DB.uploads.push(up);byId('cards',id).bg={kind:'upload',id:up.id}}else throw new Error('Use JPG, PNG, or MP4.');persist();route()}catch(err){toast(err.message)}},
+ portraitGen(id){const c=byId('cards',id),u=me();if(u.credits.portrait<1){toast('No Living Portrait credits left.');return}u.credits.portrait--;c.portrait={generated:true,approved:false,at:nowISO()};persist();toast('Living Portrait generated (simulated). Review and approve before publishing.');route()},
+ portraitApprove(id,v){byId('cards',id).portrait.approved=v;persist();A.pv(id)},
+ cfield(id,k,on){const c=byId('cards',id);c.fields_shown=on?[...new Set([...c.fields_shown,k])]:c.fields_shown.filter(x=>x!==k);persist();A.pv(id)},
+ uval(k,v,id){me()[k]=v;persist();A.pv(id)},
+ clink(id,i,k,v){byId('cards',id).custom_links[i][k]=v;persist();A.pv(id)},
+ clinkAdd(id){byId('cards',id).custom_links.push({label:'',url:''});persist();route()},
+ clinkDel(id,i){byId('cards',id).custom_links.splice(i,1);persist();route()},
+ bset(id,i,k,v,full){byId('cards',id).buttons[i][k]=v;persist();full?route():A.pv(id)},
+ bmove(id,i,d){const b=byId('cards',id).buttons;const j=i+d;if(j<0||j>=b.length)return;[b[i],b[j]]=[b[j],b[i]];persist();route()},
+ btnDrop(e,id,to){e.preventDefault();const from=+e.dataTransfer.getData('text/plain');const b=byId('cards',id).buttons;const[x]=b.splice(from,1);b.splice(to,0,x);persist();route()},
+ baddCustom(id){byId('cards',id).buttons.push({id:rid(5),kind:'custom',label:'',url:'',on:true});persist();route()},
+ standaloneForm(id){const f=newForm(me(),null);DB.forms.push(f);const c=byId('cards',id);c.intake_form_id=f.id;const b=c.buttons.find(b=>b.kind==='intake');if(b)b.on=true;persist();go(`#/forms/${f.id}?back=${encodeURIComponent('#/cards/'+id+'/edit?step=7')}`)},
+ draft(id){persist();toast('Draft saved');},
+ publish(id,from){const c=byId('cards',id),u=me();const s=slugify($('#slug').value);if(!s){toast('Enter a link slug using letters, numbers, and dashes.');return}if(DB.cards.some(x=>x.user_id===u.id&&x.slug===s&&x.id!==id)){toast('You already use that slug on another card.');return}
+  if(c.dynamic&&c.background_effect==='portrait'&&limits(u).effects&&!(c.portrait.generated&&c.portrait.approved)){toast('Generate and approve the Living Portrait (step 4), or pick another effect.');return}
+  if(c.buttons.some(b=>b.kind==='intake'&&b.on)&&!c.intake_form_id){toast('The intake button is on but no form is attached (step 7).');return}
+  c.slug=s;c.status='live';c.qr_url=cardUrl(c)+'?src=qr';persist();toast('Published');go(from==='onb'?`#/onboarding?step=4&card=${id}`:`#/cards/${id}`)},
+ unpublish(id){byId('cards',id).status='draft';persist();toast('Unpublished. The link and tags now show "not available".');route()},
+ dupCard(id){const u=me();if(mine('cards').length>=limits(u).cards){toast('Card limit reached on this plan.');return}const c=JSON.parse(JSON.stringify(byId('cards',id)));c.id='c_'+rid();c.name+=' (copy)';c.slug='';c.status='draft';c.created_at=nowISO();c.saves=0;DB.cards.push(c);persist();go(`#/cards/${c.id}/edit?step=1`)},
+ delCard(id){if(!confirm('Delete this card? Tags pointing to it will show "not available" until re-aimed.'))return;DB.cards=DB.cards.filter(c=>c.id!==id);DB.events.forEach(e=>e.card_ids=e.card_ids.filter(x=>x!==id));persist();go('#/cards')},
+ share(url,name){if(navigator.share)navigator.share({title:name+' on Goldex',url}).catch(()=>{});else copyText(url)},
+ async qrPng(id){const c=byId('cards',id);const url=qrDataURL(cardUrl(c)+'?src=qr',1000);const b=await (await fetch(url)).blob();saveFile(`goldex-qr-${c.slug||c.id}.png`,b)},
+ qrPdf(id){const c=byId('cards',id);if(!window.jspdf){toast('PDF library did not load.');return}const d=new jspdf.jsPDF({unit:'pt',format:'letter'});d.addImage(qrDataURL(cardUrl(c)+'?src=qr',1000),'PNG',131,160,350,350);d.setFontSize(18);d.text(owner(c).name||'',306,120,{align:'center'});d.setFontSize(11);d.text(cardUrl(c),306,540,{align:'center'});saveFile(`goldex-qr-${c.slug||c.id}.pdf`,d.output('blob'))},
+ qrFull(id){const c=byId('cards',id);modal(`<div class="qr" data-qr="${esc(cardUrl(c)+'?src=qr')}" data-size="${Math.min(innerWidth,innerHeight)-120}"></div><p>${esc(owner(c).name)}</p>`,'full')},
+ async qrCardCanvas(c){const u=owner(c),W=1200,H=1700;const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textAlign='center';
+  if(c.photo_url){try{const img=await loadImg(c.photo_url);x.save();x.beginPath();x.arc(W/2,250,150,0,Math.PI*2);x.clip();x.drawImage(img,W/2-150,100,300,300);x.restore()}catch(e){}}
+  x.fillStyle='#111';x.font='bold 72px system-ui,sans-serif';x.fillText(u.name||'',W/2,500);x.fillStyle='#555';x.font='42px system-ui,sans-serif';x.fillText([u.title,u.company].filter(Boolean).join(', '),W/2,570);
+  const q=await loadImg(qrDataURL(cardUrl(c)+'?src=qr',900));x.drawImage(q,175,640,850,850);x.font='36px system-ui,sans-serif';x.fillText('Scan to open my card',W/2,1580);return cv},
+ async qrCardPng(id){const c=byId('cards',id);const cv=await A.qrCardCanvas(c);saveFile(`goldex-qrcard-${c.slug||c.id}.png`,await canvasBlob(cv))},
+ async qrCardPdf(id){const c=byId('cards',id);if(!window.jspdf){toast('PDF library did not load.');return}const cv=await A.qrCardCanvas(c);const d=new jspdf.jsPDF({unit:'pt',format:'letter'});d.addImage(cv.toDataURL('image/png'),'PNG',126,36,360,510);saveFile(`goldex-qrcard-${c.slug||c.id}.pdf`,d.output('blob'))},
+ async saveVcf(id){const c=byId('cards',id);c.saves=(c.saves||0)+1;persist();const v=vcardOf(c);const fn=slugify(owner(c).name)||'contact';
+  if(!DL){saveFile(fn+'.vcf',new Blob([v],{type:'text/vcard'}));return}
+  modal(`<h2>Save Contact</h2><p>This preview viewer blocks .vcf downloads. On the GitHub or Vercel deployment this button downloads the .vcf directly and the phone opens it in Contacts.</p><p><button class="btn primary" onclick="saveFile('${fn}.txt',vcardOf(byId('cards','${id}')))">Download as .txt (rename to .vcf)</button></p><details><summary>vCard contents</summary><pre>${esc(v.replace(/PHOTO;[^\r\n]+/,'PHOTO: (embedded image)'))}</pre></details>`)},
+ /* NFC */
+ async writeTag(kind,id){const u=me();const t={id:rid(5),user_id:u.id,order_id:'',uid:'',label:'My own sticker',points_to:kind?{kind,id}:(mainCard(u)?{kind:'card',id:mainCard(u).id}:null),status:'active',scan_count:0,last_scan_at:'',source:'own'};const url=tagUrl(t);
+  if('NDEFReader' in window){try{toast('Hold a blank sticker to the back of your phone...');await new NDEFReader().write({records:[{recordType:'url',data:url}]});DB.tags.push(t);persist();toast('Sticker written. Tag '+t.id+' is active.');route()}catch(e){toast('Write failed: '+e.message)}return}
+  modal(`<h2>Write to my own sticker</h2><p>This browser cannot write NFC (iOS Safari and desktop browsers block it). The iOS app writes stickers through Core NFC; Chrome on Android can write from this page.</p><p>To test now, create the tag record and write this link with any NFC writer app:</p><pre>${esc(url)}</pre><button class="btn primary" onclick="A.createOwnTag(${esc(JSON.stringify(JSON.stringify(t)))})">Create tag record</button>`)},
+ createOwnTag(json){const t=JSON.parse(json);DB.tags.push(t);persist();closeModal();toast('Tag '+t.id+' created and active');go('#/tags/'+t.id)},
+ claim(){const id=prompt('Enter the tag ID printed on the sticker packaging (or tap the tag):');if(!id)return;const t=DB.tags.find(x=>x.id===id.trim());if(!t||t.user_id!==me().id){toast('No tag with that ID belongs to your orders.');return}if(t.status==='active'){toast('That tag is already active.');return}if(!['delivered','shipped','encoded'].includes(t.status)){toast('That tag has not shipped yet.');return}t.status='active';persist();toast('Tag claimed and active');route()},
+ tagSet(id,k,v,full){byId('tags',id)[k]=v;persist();if(full)route();else toast('Saved')},
+ tagPoint(id,v){const[kind,x]=v.split(':');byId('tags',id).points_to=v?{kind,id:x}:null;persist();toast('Tag now opens '+destLabel(byId('tags',id).points_to));route()},
+ placeOrder(e){e.preventDefault();const f=new FormData(e.target),u=me();const qty=+f.get('qty');const[kind,x]=String(f.get('dest')).split(':');const n=10000+DB.orders.length+232;const o={id:'GL-'+n,user_id:u.id,product:'NFC stickers',color:f.get('color'),quantity:qty,price:PRICES[qty],shipping_address:{name:f.get('name'),line1:f.get('line1'),city:f.get('city'),state:String(f.get('state')).toUpperCase(),zip:f.get('zip')},vendor:'Pending vendor selection',vendor_order_ref:'',tracking_number:'',status:'ordered',created_at:nowISO(),est_delivery:addDays(10)};DB.orders.push(o);for(let i=0;i<qty;i++)DB.tags.push({id:rid(5),user_id:u.id,order_id:o.id,uid:'',label:'',points_to:{kind,id:x},status:'ordered',scan_count:0,last_scan_at:'',source:'order',color:o.color});persist();go('#/orders/'+o.id)},
+ vendor(oid,st){const o=byId('orders',oid);const ts=DB.tags.filter(t=>t.order_id===oid);if(st==='encoded'){ts.forEach(t=>{t.status='encoded';t.uid='04:'+[...crypto.getRandomValues(new Uint8Array(6))].map(b=>b.toString(16).padStart(2,'0').toUpperCase()).join(':');t.encoded_at=todayStr()});o.status='encoded'}
+  if(st==='shipped'){ts.forEach(t=>t.status='shipped');o.status='shipped';o.tracking_number='1Z'+rid(12).toUpperCase();toast('Owner notified: shipped, tracking '+o.tracking_number)}
+  if(st==='delivered'||st==='delivered_active'){ts.forEach(t=>t.status=st==='delivered'?'delivered':'active');o.status='delivered'}persist();route()},
+ exportManifest(){const rows=[['order_id','tag_id','url_to_encode','color','ship_name','ship_address','quantity_in_order','tag_uid','encoded_at','tracking_number','status']];mine('orders').forEach(o=>DB.tags.filter(t=>t.order_id===o.id).forEach(t=>rows.push([o.id,t.id,tagUrl(t),o.color,o.shipping_address.name,`${o.shipping_address.line1}, ${o.shipping_address.city} ${o.shipping_address.state} ${o.shipping_address.zip}`,o.quantity,t.uid,t.encoded_at||'',o.tracking_number,t.status])));saveFile('goldex-vendor-manifest.csv',csvOf(rows))},
+ importManifest(inp){const file=inp.files[0];if(!file)return;file.text().then(txt=>{const rows=parseCSV(txt);const h=rows.shift().map(x=>x.trim().toLowerCase());const ix=k=>h.indexOf(k);let n=0;rows.forEach(r=>{const t=DB.tags.find(x=>x.id===r[ix('tag_id')]&&x.user_id===me().id);if(!t)return;if(ix('tag_uid')>=0&&r[ix('tag_uid')])t.uid=r[ix('tag_uid')];if(ix('encoded_at')>=0&&r[ix('encoded_at')])t.encoded_at=r[ix('encoded_at')];const st=ix('status')>=0?r[ix('status')]:'';if(['encoded','shipped'].includes(st)&&t.status!=='active')t.status=st;const o=byId('orders',t.order_id);if(o){if(ix('tracking_number')>=0&&r[ix('tracking_number')])o.tracking_number=r[ix('tracking_number')];if(st)o.status=st}n++});persist();toast(n+' tag rows updated from vendor CSV');route()})},
+ /* events */
+ saveEvent(e,id){e.preventDefault();const f=new FormData(e.target),ev=byId('events',id);['name','start_date','end_date','city','venue'].forEach(k=>ev[k]=String(f.get(k)||'').trim());if(ev.end_date&&ev.end_date<ev.start_date){toast('End date is before start date.');return}ev.card_ids=f.getAll('cards');const sel=new Set(f.getAll('tags'));mine('tags').forEach(t=>{if(sel.has(t.id))t.points_to={kind:'event',id};else if(t.points_to?.kind==='event'&&t.points_to.id===id)t.points_to=ev.card_ids[0]?{kind:'card',id:ev.card_ids[0]}:null});const fm=byId('forms',ev.intake_form_id);if(fm&&/^I'm at /.test(fm.event_checkbox_label))fm.event_checkbox_label=`I'm at ${ev.name}`;persist();toast('Event saved');route()},
+ eventForm(id){const ev=byId('events',id);const f=newForm(me(),ev);DB.forms.push(f);ev.intake_form_id=f.id;ev.card_ids.forEach(cid=>{const c=byId('cards',cid);if(c&&!c.intake_form_id)c.intake_form_id=f.id});persist();go(`#/forms/${f.id}?back=${encodeURIComponent('#/events/'+id)}`)},
+ delEvent(id){if(!confirm('Delete this event? Submissions stay on your contacts.'))return;DB.events=DB.events.filter(e=>e.id!==id);DB.tags.forEach(t=>{if(t.points_to?.kind==='event'&&t.points_to.id===id)t.points_to=null});persist();go('#/events')},
+ fset(id,k,v){byId('forms',id)[k]=v;persist();const el=$('#fprev');if(el)el.innerHTML=intakeFormHTML(byId('forms',id),me())},
+ frole(id,i,v){const f=byId('forms',id);if(v.trim())f.role_options[i]=v.trim();persist();route()},
+ froleDel(id,i){byId('forms',id).role_options.splice(i,1);persist();route()},
+ froleAdd(id){const v=$('#newrole').value.trim();if(!v)return;byId('forms',id).role_options.push(v);persist();route()},
+ submitIntake(e,cid){e.preventDefault();const f=new FormData(e.target),c=byId('cards',cid),fm=byId('forms',c.intake_form_id),u=owner(c);
+  const sub={id:'s_'+rid(),card_id:cid,event_id:f.get('event')&&fm.event_id?fm.event_id:'',contact_id:'',name:String(f.get('name')).trim(),phone:String(f.get('phone')||'').trim(),email:String(f.get('email')||'').trim(),roles:f.getAll('roles'),note:String(f.get('note')||'').trim(),consent:!!f.get('consent'),consent_timestamp:f.get('consent')?nowISO():'',created_at:nowISO()};
+  const jv=JEV.intake(sub.note,sub.roles);const list=DB.contacts.filter(x=>x.user_id===u.id);const dup=JEV.dup(sub,list);let k=dup&&dup.conf>=.85?byId('contacts',dup.id):null;
+  if(k){k.roles=[...new Set([...k.roles,...jv.roles])];if(sub.event_id&&!k.events_met.includes(sub.event_id))k.events_met.push(sub.event_id);k.phone=k.phone||sub.phone;k.email=k.email||sub.email;k.intake_note=sub.note||k.intake_note;if(sub.consent){k.consent_status='granted';k.consent_timestamp=sub.consent_timestamp}k.jev={priority:jv.priority,opportunity:jv.opportunity,suggested_tier:jv.suggested_tier}}
+  else{k={id:'k_'+rid(),user_id:u.id,name:sub.name,phone:sub.phone,email:sub.email,socials:'',website:'',city:'',state:'',roles:jv.roles,events_met:sub.event_id?[sub.event_id]:[],rating:0,cost_tier:'',relationship_tier:jv.conf>=.85?jv.suggested_tier:'',birthday:'',notes:'',source:'intake',consent_status:sub.consent?'granted':'none',consent_timestamp:sub.consent_timestamp,created_at:nowISO(),intake_note:sub.note,review:jv.conf<.85&&dup&&dup.conf<.85?{reason:`Possible duplicate of ${byId('contacts',dup.id)?.name} (${dup.why}).`,suggest:{},conf:dup.conf}:null,jev:{priority:jv.priority,opportunity:jv.opportunity,suggested_tier:jv.suggested_tier}};DB.contacts.push(k)}
+  sub.contact_id=k.id;DB.submissions.push(sub);persist();
+  render(`${pubBar()}<main class="pub"><h1>Thank you, ${esc(firstName(sub.name))}</h1><p>${esc(firstName(u.name))} has your details${sub.consent?' and will follow up':''}.</p><button class="gl-btn" style="border:1px solid #ccc;width:100%" onclick="A.saveVcf('${cid}')">Save Contact</button><p><a href="${cardHash(c)}&nolog=1">Back to card</a></p></main>`)},
+ /* contacts */
+ cq(v){CF.q=v;refreshContacts()},
+ colMenu(k,el){pop(el,colMenuHTML(k))},
+ ftoggle(k,v){const cur=Array.isArray(CF.f[k])?[...CF.f[k]]:[];const i=cur.indexOf(v);i<0?cur.push(v):cur.splice(i,1);CF.f[k]=cur;refreshContacts()},
+ fset(k,v){CF.f[k]=v;refreshContacts();const p=$('.pop');if(p&&!Array.isArray(v)){}},
+ fclear(k){delete CF.f[k];refreshContacts()},
+ fclearAll(){CF.f={};CF.q='';const s=$('#csearch');if(s)s.value='';refreshContacts()},
+ csort(k,d){CF.sort={key:k,dir:d};refreshContacts();closePop()},
+ cellEdit(cid,k,el){pop(el,cellEditHTML(cid,k))},
+ cellSet(cid,k,v){const c=byId('contacts',cid),f=fieldBy(k);setV(c,f,v);persist();refreshContacts()},
+ cellToggle(cid,k,v){const c=byId('contacts',cid),f=fieldBy(k);const cur=[...(getV(c,f)||[])];const i=cur.indexOf(v);i<0?cur.push(v):cur.splice(i,1);setV(c,f,cur);persist();refreshContacts()},
+ cellNewOpt(cid,k){const v=$('#newopt').value.trim();if(!v)return;const f=fieldBy(k);if(!f.options.includes(v))f.options.push(v);const c=byId('contacts',cid);setV(c,f,[...new Set([...(getV(c,f)||[]),v])]);persist();refreshContacts();closePop()},
+ sel(id,on){if(id)on?SEL.add(id):SEL.delete(id);const b=$('#msgsel');if(b){b.textContent=`Message selected (${SEL.size})`;b.disabled=!SEL.size}},
+ selAll(on){$$('.csel').forEach(x=>{x.checked=on;on?SEL.add(x.value):SEL.delete(x.value)});A.sel('',false)},
+ msgShown(){const ids=filteredContacts().map(c=>c.id);go('#/messages?tab=send&ids='+ids.join(','))},
+ fldSet(i,k,v){const f=cfields()[i];if(k==='label'&&!String(v).trim())return;f[k]=k==='label'?String(v).trim():v;persist();toast('Saved')},
+ fldMove(i,d){const fs=cfields(),j=i+d;[fs[i],fs[j]]=[fs[j],fs[i]];persist();route()},
+ fldDel(i){const f=cfields()[i];if(!confirm(`Delete the "${f.label}" column and its values on every contact?`))return;mine('contacts').forEach(c=>{if(c.cf)delete c.cf[f.key]});cfields().splice(i,1);Object.keys(CF.f).forEach(k=>{if(k===f.key)delete CF.f[k]});persist();route()},
+ fldAdd(e){e.preventDefault();const fd=new FormData(e.target);const type=fd.get('type');const f={key:'cf_'+rid(6),label:String(fd.get('label')).trim(),type,visible:true,builtin:false};if(type==='select'||type==='multi')f.options=String(fd.get('options')||'').split(',').map(x=>x.trim()).filter(Boolean);cfields().push(f);persist();toast('Column added');route()},
+ fldReset(){if(!confirm('Restore the default columns? Your custom columns stay but move to the end.'))return;const u=me();const custom=u.cfields.filter(f=>!f.builtin);u.cfields=[...DEFAULT_CFIELDS(),...custom];persist();route()},
+ optRename(i,j,v){const f=cfields()[i],old=f.options[j];v=v.trim();if(!v||v===old)return;f.options[j]=v;mine('contacts').forEach(c=>{const cur=getV(c,f);if(Array.isArray(cur))setV(c,f,cur.map(x=>x===old?v:x));else if(cur===old)setV(c,f,v)});persist();toast(`Renamed on every contact`)},
+ optDel(i,j){const f=cfields()[i],old=f.options[j];const n=mine('contacts').filter(c=>{const v=getV(c,f);return Array.isArray(v)?v.includes(old):v===old}).length;if(n&&!confirm(`${n} contact(s) use "${old}". Remove it from them too?`))return;f.options.splice(j,1);mine('contacts').forEach(c=>{const cur=getV(c,f);if(Array.isArray(cur))setV(c,f,cur.filter(x=>x!==old));else if(cur===old)setV(c,f,'')});persist();route()},
+ optAdd(i,v){v=String(v||'').trim();if(!v)return;const f=cfields()[i];if(!f.options.includes(v))f.options.push(v);persist();route()},
+ msgSelected(){const ids=[...SEL];SEL=new Set();go('#/messages?tab=send&ids='+ids.join(','))},
+ addContact(){const u=me();if(mine('contacts').length>=limits(u).contacts){toast('Contact limit reached on this plan.');return}const k={id:'k_'+rid(),user_id:u.id,name:'New contact',phone:'',email:'',socials:'',website:'',city:'',state:'',roles:[],events_met:[],rating:0,cost_tier:'',relationship_tier:'',birthday:'',notes:'',source:'manual',consent_status:'none',consent_timestamp:'',created_at:nowISO(),intake_note:'',review:null,jev:null};DB.contacts.push(k);persist();go('#/contacts/'+k.id)},
+ saveContact(e,id){e.preventDefault();const fd=new FormData(e.target),c=byId('contacts',id);cfields().forEach(f=>{if(f.readonly||f.type==='computed')return;let v;if(f.type==='multi'||f.type==='events')v=fd.getAll(f.key);else if(f.type==='checkbox')v=fd.has(f.key);else if(f.type==='rating'||f.type==='number')v=+fd.get(f.key)||0;else v=String(fd.get(f.key)??'').trim();setV(c,f,v)});c.socials=String(fd.get('socials')||'').trim();c.website=String(fd.get('website')||'').trim();c.notes=String(fd.get('notes')||'').trim();c.review=null;persist();toast('Contact saved');route()},
+ revoke(id){const c=byId('contacts',id);c.consent_status='revoked';c.consent_timestamp=nowISO();persist();toast('Opt-out recorded. This contact is excluded from all sends.');route()},
+ delContact(id){if(!confirm('Delete this contact?'))return;DB.contacts=DB.contacts.filter(c=>c.id!==id);persist();go('#/contacts')},
+ reviewAccept(id){const c=byId('contacts',id);Object.assign(c,c.review.suggest||{});c.review=null;persist();route()},
+ reviewDismiss(id){byId('contacts',id).review=null;persist();route()},
+ /* import */
+ impLoad(recs,src){if(!recs.length){toast('No contacts found in that file.');return}const u=me(),room=limits(u).contacts-mine('contacts').length;if(recs.length>room){toast(`Only ${room} more contacts fit on this plan. Importing the first ${room}.`);recs=recs.slice(0,Math.max(0,room))}IMP={step:2,source:src,rows:prepRows(recs)};route()},
+ impFile(inp,kind){const file=inp.files[0];if(!file)return;file.text().then(t=>A.impLoad(kind==='csv'?csvRecs(t):vcfRecs(t),kind))},
+ impSample(){A.impLoad(csvRecs(SAMPLE_IMPORT),'csv')},
+ async impPhone(){if(!('contacts' in navigator&&'select' in navigator.contacts)){toast('This browser has no contact picker. Use a VCF or CSV export from your phone instead.');return}try{const r=await navigator.contacts.select(['name','tel','email'],{multiple:true});A.impLoad(r.map(x=>({name:(x.name||[])[0]||'',phone:(x.tel||[])[0]||'',email:(x.email||[])[0]||''})),'phone')}catch(e){toast('Contact picker closed.')}},
+ impEdit(i,k,v){const r=IMP.rows[i];r[k]=v;if(k!=='action'){r.conf=.9;r.gate='act'}},
+ impRoles(i,sel){IMP.rows[i].roles=[...sel.selectedOptions].map(o=>o.value);IMP.rows[i].conf=.9;IMP.rows[i].gate='act'},
+ impStep(n){IMP.step=n;route()},impReset(){IMP={step:1,source:'',rows:[]};route()},
+ impCommit(){const u=me();let a=0,m=0;IMP.rows.forEach(r=>{if(r.action==='skip')return;if(r.action==='merge'&&r.dup){const c=byId('contacts',r.dup.id);c.phone=c.phone||r.phone;c.email=c.email||r.email;c.city=c.city||r.city;c.state=c.state||r.state;c.roles=[...new Set([...c.roles,...r.roles,...(IMP.applyRoles||[])])];if(IMP.applyCustomer)c.customer=IMP.applyCustomer;m++;return}
+  DB.contacts.push({id:'k_'+rid(),user_id:u.id,name:r.name,phone:r.phone,email:r.email,socials:'',website:'',company:r.isBusiness?r.name:'',customer:IMP.applyCustomer||'',city:r.city,state:r.state,roles:[...new Set([...r.roles,...(IMP.applyRoles||[])])],events_met:[],rating:0,cost_tier:'',relationship_tier:'',birthday:'',notes:(r.isBusiness?'Business. ':'')+(r.notes||''),source:'import',consent_status:'none',consent_timestamp:'',created_at:nowISO(),intake_note:'',review:r.gate==='review'?{reason:`Jev was ${Math.round(r.conf*100)}% sure about "${r.raw}".`,suggest:{},conf:r.conf}:null,jev:null});a++});persist();IMP={step:1,source:'',rows:[]};toast(`Imported ${a}, merged ${m}`);go('#/contacts')},
+ trip(e){e.preventDefault();const f=new FormData(e.target);go(`#/trip?city=${encodeURIComponent(f.get('city'))}&from=${f.get('from')}&to=${f.get('to')}&purpose=${encodeURIComponent(f.get('purpose'))}`)},
+ tripMsg(){const ids=$$('.tsel:checked').map(x=>x.value);if(!ids.length){toast('Select at least one contact.');return}go('#/messages?tab=send&ids='+ids.join(','))},
+ /* messages */
+ msf(k,v){MS.f[k]=v;route()},msSet(k,v){MS[k]=v;route()},msClearIds(){MS.ids=[];route()},
+ msTpl(id){const t=byId('templates',id);MS.template_id=id;if(t){MS.body=t.body;MS.subject=t.subject;MS.channel=t.channel}route()},
+ msIns(tok){const ta=$('#mbody');const s=ta.selectionStart??ta.value.length;ta.value=ta.value.slice(0,s)+tok+ta.value.slice(ta.selectionEnd??s);MS.body=ta.value;ta.focus();A.msPrev()},
+ msPrev(){const R=msRecipients(),f=R.ok[0];const el=$('#mprev');if(el)el.textContent=f?(MS.channel==='email'?'Subject: '+merge(MS.subject,f,MS.event)+'\n\n':'')+finalBody(merge(MS.body,f,MS.event),MS.channel,R.bulk):'No recipients.'},
+ msSend(){if(!MS.body.trim()){toast('Write a message or pick a template.');return}const R=msRecipients();const later=MS.when==='later';if(later&&!MS.at){toast('Pick a date and time to schedule.');return}const at=later?new Date(MS.at).toISOString():nowISO();
+  const seg=MS.ids.length?`${MS.ids.length} picked`:[MS.event&&('event: '+(byId('events',MS.event)?.name||'')),MS.today&&'today',MS.pending&&'pending follow-ups',...Object.entries(MS.f).filter(([,v])=>v).map(([k,v])=>k+': '+v)].filter(Boolean).join(', ')||'All contacts';
+  DB.messages.push({id:'m_'+rid(),user_id:me().id,kind:R.ok.length===1?'one-to-one':'group',segment_filter:seg,channel:MS.channel,template_id:MS.template_id,subject:MS.subject,body:MS.body,recipients:R.ok.map(c=>c.id),scheduled_at:at,sent_at:later?'':at,status:later?'scheduled':'sent',sent_count:R.ok.length,excluded_count:R.ex.length});persist();toast(later?`Scheduled for ${R.ok.length}`:`Sent to ${R.ok.length} (simulated)`);MS=null;go('#/messages?tab=history')},
+ phoneLog(mode){const R=msRecipients();if(!R.ok.length)return;DB.messages.push({id:'m_'+rid(),user_id:me().id,kind:'phone',segment_filter:mode==='email'?'Opened in my email app':mode==='group'?'Group text from my phone':'Sent from my phone',channel:MS.channel,template_id:MS.template_id,subject:MS.subject,body:MS.body,recipients:R.ok.map(c=>c.id),scheduled_at:nowISO(),sent_at:nowISO(),status:'sent',sent_count:R.ok.length,excluded_count:R.ex.length});persist();if(mode==='manual')toast('Logged. Last contacted is updated for '+R.ok.length+' contact(s).')},
+ phoneOne(cid){const c=byId('contacts',cid);DB.messages.push({id:'m_'+rid(),user_id:me().id,kind:'phone',segment_filter:'One by one from my phone',channel:'sms',template_id:MS.template_id,subject:'',body:merge(MS.body,c,MS.event),recipients:[cid],scheduled_at:nowISO(),sent_at:nowISO(),status:'sent',sent_count:1,excluded_count:0});MS.done.add(cid);persist();setTimeout(()=>{const li=[...$$('.queue li')].find(l=>l.innerHTML.includes(`phoneOne('${cid}')`));if(li)li.classList.add('done')},50)},
+ shareOut(){const R=msRecipients();const text=`${$('#mprev').textContent}\n\nTo: ${R.ok.map(c=>c.name+' '+e164(c.phone)).join(', ')}`;if(navigator.share)navigator.share({text}).catch(()=>{});else copyText(text)},
+ emailSet(k,v){me().settings.email[k]=v;persist();toast('Saved')},
+ autoToggle(id,v){byId('automations',id).active=v;persist()},
+ addAuto(e){e.preventDefault();const f=new FormData(e.target);DB.automations.push({id:'a_'+rid(),user_id:me().id,trigger:f.get('trigger'),filter:{tier:f.get('tier'),role:f.get('role'),city:String(f.get('city')||'').trim(),event:f.get('event')},template_id:f.get('template_id'),send_time:f.get('send_time'),active:true});persist();route()},
+ delAuto(id){DB.automations=DB.automations.filter(a=>a.id!==id);persist();route()},
+ runAuto(id){const a=byId('automations',id),t=byId('templates',a.template_id);const list=autoTargets(a).filter(c=>t.channel==='sms'?c.phone:c.email);jevTick(list.length?1:0);if(!list.length){toast('No consented contacts match this rule right now.');return}DB.messages.push({id:'m_'+rid(),user_id:me().id,kind:'automation',segment_filter:TRIGGERS[a.trigger],channel:t.channel,template_id:t.id,subject:t.subject,body:t.body,recipients:list.map(c=>c.id),scheduled_at:nowISO(),sent_at:nowISO(),status:'sent',sent_count:list.length,excluded_count:0});persist();toast(`Automation sent to ${list.length}: ${list.map(c=>c.name).slice(0,4).join(', ')}`);route()},
+ saveTpl(e,id){e.preventDefault();const f=new FormData(e.target),t=byId('templates',id);['name','channel','subject','body'].forEach(k=>t[k]=String(f.get(k)||''));persist();toast('Template saved')},
+ newTpl(){DB.templates.push({id:'tp_'+rid(),user_id:me().id,name:'New template',channel:'sms',subject:'',body:''});persist();route()},
+ delTpl(id){if(DB.automations.some(a=>a.template_id===id)){toast('An automation uses this template. Change or delete the automation first.');return}DB.templates=DB.templates.filter(t=>t.id!==id);persist();route()},
+ reply(e){e.preventDefault();const f=new FormData(e.target);const cid=f.get('cid'),text=String(f.get('text'));const r=JEV.reply(text);if(r.by==='jev')jevTick();if(r.label==='STOP'){const c=byId('contacts',cid);c.consent_status='revoked';c.consent_timestamp=nowISO()}DB.replies.push({id:rid(),user_id:me().id,contact_id:cid,text,label:r.label,by:r.by,conf:r.conf,created_at:nowISO()});persist();toast(r.label==='STOP'?'STOP handled in code: consent revoked instantly.':`Jev: ${r.label}`);route()},
+ /* profile fields, overrides, theme */
+ pfAdd(){me().custom_fields.push({id:rid(5),label:'',kind:'url',value:''});persist();route()},
+ pfSet(id,k,v,cardId){const f=me().custom_fields.find(x=>x.id===id);if(!f)return;f[k]=String(v).trim();persist();if(cardId)A.pv(cardId)},
+ pfDel(id){const u=me();u.custom_fields=u.custom_fields.filter(x=>x.id!==id);DB.cards.forEach(c=>c.fields_shown=c.fields_shown.filter(k=>k!=='pf_'+id));persist();route()},
+ fval(id,k,v){const c=byId('cards',id);if(c.overrides&&c.overrides[k]!==undefined)c.overrides[k]=v;else me()[k]=v;persist();A.pv(id)},
+ cov(id,k,on){const c=byId('cards',id);c.overrides=c.overrides||{};if(on)c.overrides[k]=me()[k]||'';else delete c.overrides[k];persist();route()},
+ theme(t){try{localStorage.setItem('goldex_theme',t)}catch(e){}applyTheme();route()},
+ /* settings */
+ saveProfile(e){e.preventDefault();const f=new FormData(e.target),u=me();const un=slugify(f.get('username'));if(DB.users.some(x=>x.username===un&&x.id!==u.id)){toast('That username is taken.');return}const em=String(f.get('email')).trim().toLowerCase();if(DB.users.some(x=>x.email.toLowerCase()===em&&x.id!==u.id)){toast('That email belongs to another account.');return}['name','title','company','phone','website','booking','instagram','x','linkedin','tiktok','youtube'].forEach(k=>u[k]=String(f.get(k)||'').trim());u.email=em;u.username=un;persist();toast('Profile saved');route()},
+ plan(p){me().plan=p;persist();toast('Plan set to '+limits(me()).name+' (test mode)');route()},
+ credits(){me().credits.portrait+=3;persist();route()},
+ notif(k,v){me().settings.notif[k]=v;persist()},
+ connect(k){const s=me().settings.connected;s[k]=!s[k];persist();route()},
+ smsReg(v){me().settings.smsReg=v;persist();route()},
+ linkBase(v){me().settings.linkBase=v.trim()||'https://goldex.link';persist();toast('Link domain updated')},
+ exportContacts(){const rows=[['name','phone','email','socials','website','city','state','roles','events_met','rating','cost_tier','relationship_tier','birthday','notes','source','consent_status','created_at']];mine('contacts').forEach(c=>rows.push([c.name,c.phone,c.email,c.socials,c.website,c.city,c.state,c.roles,c.events_met.map(id=>byId('events',id)?.name||id),c.rating,c.cost_tier,c.relationship_tier,c.birthday,c.notes,c.source,c.consent_status,c.created_at]));saveFile('goldex-contacts.csv',csvOf(rows))},
+ exportSubs(){const rows=[['card','event','name','phone','email','roles','note','consent','consent_timestamp','created_at']];mySubs().forEach(s=>rows.push([byId('cards',s.card_id)?.name,byId('events',s.event_id)?.name||'',s.name,s.phone,s.email,s.roles,s.note,s.consent?'yes':'no',s.consent_timestamp,s.created_at]));saveFile('goldex-submissions.csv',csvOf(rows))},
+ resetDemo(){if(!confirm('Reset all data in this browser to the demo state?'))return;const s=DB.session;DB=seed();DB.session=s&&DB.users.some(u=>u.id===s.userId)?s:null;persist();go('#/home')},
+ clearDemo(){if(!confirm('Remove all cards, events, contacts, tags, orders, and messages for this account?'))return;const id=me().id;['cards','events','forms','contacts','tags','orders','messages','automations','templates','replies'].forEach(k=>DB[k]=DB[k].filter(x=>x.user_id!==id));DB.uploads=DB.uploads.filter(x=>x.owner_id!==id);DB.submissions=DB.submissions.filter(s=>DB.cards.some(c=>c.id===s.card_id));DB.scans=DB.scans.filter(s=>DB.cards.some(c=>c.id===s.card_id)||DB.tags.some(t=>t.id===s.tag_id));DB.seeded=false;persist();go('#/home')},
+ deleteAccount(){if(!confirm('Delete this account and all its data from this browser?'))return;A.clearDemoSilent();const id=me().id;DB.users=DB.users.filter(u=>u.id!==id);DB.session=null;persist();go('#/login')},
+ clearDemoSilent(){const id=me().id;['cards','events','forms','contacts','tags','orders','messages','automations','templates','replies'].forEach(k=>DB[k]=DB[k].filter(x=>x.user_id!==id))}
+};
+function csvRecs(text){const rows=parseCSV(text);if(!rows.length)return[];const h=rows[0].map(x=>x.trim().toLowerCase());const f=(...ks)=>h.findIndex(x=>ks.includes(x));const hasHeader=h.some(x=>['name','full name','first name','phone','email'].includes(x));const data=hasHeader?rows.slice(1):rows;const iN=hasHeader?f('name','full name','display name'):0,iF=f('first name','given name'),iL=f('last name','family name'),iP=hasHeader?f('phone','mobile','phone number','mobile phone'):1,iE=hasHeader?f('email','e-mail','email address'):2,iC=f('city'),iS=f('state'),iNo=f('notes','note');
+ return data.map(r=>({name:(iN>=0?r[iN]:[r[iF],r[iL]].filter(Boolean).join(' '))||'',phone:iP>=0?r[iP]||'':'',email:iE>=0?r[iE]||'':'',city:iC>=0?r[iC]||'':'',state:iS>=0?r[iS]||'':'',notes:iNo>=0?r[iNo]||'':''})).filter(r=>r.name||r.phone||r.email)}
+function vcfRecs(text){return text.replace(/\r\n[ \t]/g,'').split(/BEGIN:VCARD/i).slice(1).map(b=>{const g=re=>{const m=b.match(re);return m?m[1].trim():''};const adr=g(/\nADR[^:]*:([^\r\n]*)/i).split(';');return{name:g(/\nFN[^:]*:([^\r\n]*)/i)||g(/\nN[^:]*:([^\r\n]*)/i).split(';').reverse().filter(Boolean).join(' '),phone:g(/\nTEL[^:]*:([^\r\n]*)/i),email:g(/\nEMAIL[^:]*:([^\r\n]*)/i),city:adr[3]||'',state:adr[4]||'',notes:g(/\nNOTE[^:]*:([^\r\n]*)/i)}}).filter(r=>r.name||r.phone||r.email)}
+
+/* ============ BOOT ============ */
+function applyTheme(){const t=(()=>{try{return localStorage.getItem('goldex_theme')||'auto'}catch(e){return'auto'}})();if(t==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t}
+const PORTRAIT_VIDEO='https://d8j0ntlcm91z4.cloudfront.net/user_314g1RuovP9twqNuTM019MiTWLk/hf_20260921_093443_abc94a45-ff73-4c68-a45e-8899d3ac6840.mp4',PORTRAIT_STILL='https://d8j0ntlcm91z4.cloudfront.net/user_314g1RuovP9twqNuTM019MiTWLk/hf_20260921_093349_c78ac3c4-2108-4e29-bcd7-504a0e4d1d2f.png';
+function migrate(){if(PORTRAIT_VIDEO){const c=DB.cards.find(x=>x.user_id==='u_amechi'&&x.slug==='main');if(c&&!c.pv_set){c.bg={kind:'video_url',url:PORTRAIT_VIDEO,poster:PORTRAIT_STILL};c.pv_set=true;c.photo_effect='glass';const u=byId('users','u_amechi');if(u&&!u.title)u.title='Operations Confidant'}}DB.users.forEach(u=>{if(!u.custom_fields)u.custom_fields=[];if(u.settings.linkBase==='https://goldex.link')u.settings.linkBase='https://goldex.link';if(!u.cfields.some(f=>f.key==='intake_note'))u.cfields.push({key:'intake_note',label:'Note',type:'text',builtin:true,visible:false,readonly:true});if(!u.cfields)u.cfields=DEFAULT_CFIELDS();if(!u.settings.email)u.settings.email={fromName:'',replyTo:'',bcc:true}});DB.contacts.forEach(c=>{if(c.company==null)c.company='';if(c.customer==null)c.customer=''});DB.cards.forEach(c=>{if(!c.overrides)c.overrides={};if(!c.photo_effect)c.photo_effect='none'})}
+(async function boot(){applyTheme();DB=loadDB();if(!DB||!Array.isArray(DB.users)){DB=seed()}migrate();persist();await IDB.open();addEventListener('hashchange',route);addEventListener('storage',e=>{if(e.key===KEY){DB=loadDB()||DB;route()}});processScheduled();setInterval(processScheduled,30000);route()})();
+</script>
+</body>
+</html>
