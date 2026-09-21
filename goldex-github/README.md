@@ -13,3 +13,7 @@ Two files, no build step.
 - App data is stored in the visitor's browser (localStorage + IndexedDB). Supabase replaces this in Phase 1 production.
 - External loads: Google Fonts (Instrument Serif, Geist) and cdnjs (qrcodejs, jsPDF). Everything else is inline.
 - Test account: amechi@addcolormedia.com / VANTA
+
+## v0.7 additions
+- `purchase.html` — unlisted member page (not linked from the nav; `noindex`). Links the Member Guide PDF.
+- `goldex-user-guide.pdf` — downloadable guide served by purchase.html.
