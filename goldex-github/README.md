@@ -1,19 +1,16 @@
-# Goldex — landing page + web app (v0.4)
+# Goldex — landing, app, member page (v0.8)
 
-Two files, no build step.
+Static files, no build step.
 
-- `index.html` — the landing page (sells the product; "Log in" and "Open the web app" link to `app.html`)
-- `app.html` — the Goldex web app
+- `index.html` — landing page
+- `app.html` — the Goldex web app (log in: amechi@addcolormedia.com / VANTA)
+- `purchase.html` — unlisted member page (noindex); the same guide lives inside the app under Guide
+- `goldex-user-guide.pdf` — downloadable Member Guide
+
+## Test today (portable links)
+Cards, QR codes, and NFC links carry the card inside the link, so they open on any phone once deployed.
+Settings > Sharing shows "Portable" and fills your app address automatically on Vercel.
+Intake submissions arrive as a pre-written email or text; paste them into Contacts > Import > Paste Goldex submissions.
 
 ## Deploy
-- **GitHub Pages:** push this folder to a repo, Settings > Pages > Deploy from branch (root).
-- **Vercel:** import the repo, framework "Other", no build command, output directory `.`.
-
-## Notes
-- App data is stored in the visitor's browser (localStorage + IndexedDB). Supabase replaces this in Phase 1 production.
-- External loads: Google Fonts (Instrument Serif, Geist) and cdnjs (qrcodejs, jsPDF). Everything else is inline.
-- Test account: amechi@addcolormedia.com / VANTA
-
-## v0.7 additions
-- `purchase.html` — unlisted member page (not linked from the nav; `noindex`). Links the Member Guide PDF.
-- `goldex-user-guide.pdf` — downloadable guide served by purchase.html.
+GitHub Pages or Vercel (framework "Other", no build command, output directory `.`).

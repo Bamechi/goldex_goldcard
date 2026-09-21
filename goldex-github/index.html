@@ -94,7 +94,7 @@ h2{font:400 clamp(2rem,4vw,3.2rem)/1.02 var(--serif);letter-spacing:-.015em;marg
 @media (max-width:760px){.how{grid-template-columns:1fr}}
 /* pricing */
 .toggle{display:inline-flex;gap:.2rem;padding:.25rem;border-radius:999px;background:var(--glass);border:1px solid var(--gline);margin:0 0 1.6rem}.toggle button{padding:.45rem 1rem;border-radius:999px;border:0;background:none;color:var(--muted);font:500 .85rem var(--sans);cursor:pointer}.toggle button.on{background:var(--pill);color:var(--pillfg)}.toggle .save{font-size:.75rem;color:var(--gold);align-self:center;padding:0 .8rem 0 .4rem}
-.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;align-items:stretch}
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;align-items:stretch}.plans.three{grid-template-columns:repeat(3,1fr);max-width:980px}
 .plan{padding:1.5rem 1.4rem;display:flex;flex-direction:column;gap:.2rem}
 .plan.pop{box-shadow:var(--shadow),0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent),0 0 70px -22px var(--glow1)}
 .plan .tag{font-size:.72rem;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);border-radius:999px;padding:.1rem .55rem;align-self:flex-start;margin-bottom:.4rem}
@@ -124,7 +124,7 @@ footer{padding:3rem 0 4rem;color:var(--muted);font-size:.85rem;display:flex;just
  <div>
   <h1>Every handshake, <em>indexed.</em></h1>
   <p class="lede">Goldex turns a tap into a contact, a contact into a segment, and a segment into a follow-up. One card. One tap. A private index of everyone you meet, sorted by who they are and what they want.</p>
-  <div class="cta"><a class="btn primary" href="#beta">Join the iOS beta</a><a class="btn" href="app.html#/signup">Open the web app</a><span class="fine">Free to start. Founding Member pricing for the first 500.</span></div>
+  <div class="cta"><a class="btn primary" href="#beta">Join the iOS beta</a><a class="btn" href="app.html#/signup">Open the web app</a><span class="fine">Free to start. Run your next event on it tonight.</span></div>
  </div>
  <div class="stage">
   <div class="card" id="card">
@@ -160,20 +160,20 @@ footer{padding:3rem 0 4rem;color:var(--muted);font-size:.85rem;display:flex;just
 
 <section id="pricing" class="rev">
  <h2>Membership.</h2>
- <p class="sub">Start free. Move up when the index starts paying for itself. Add-ons: 3 Living Portrait credits $12.99, 500 texts $24.99, iMessage line $349 a month.</p>
- <div class="toggle" role="group" aria-label="Billing period"><button class="on" data-b="mo">Monthly</button><button data-b="yr">Yearly</button><span class="save">Save 34%</span></div>
- <div class="plans">
-  <div class="plan glass"><h3>Free</h3><div class="price">$0</div><p class="for">One card, one event, and a first hundred contacts.</p><ul><li>1 card, 1 event</li><li>100 contacts</li><li>50 emails a month</li><li>Voice and notes intake</li><li>Goldex footer on your card</li></ul><a class="btn" href="app.html#/signup">Start free</a></div>
-  <div class="plan glass pop"><span class="tag">Most members</span><h3>Pro</h3><div class="price"><span data-mo="$9.99" data-yr="$6.58">$9.99</span><small>/mo</small></div><p class="for">Unlimited cards, AI import and sorting, 1,000 emails a month, automations.</p><ul><li>Unlimited cards and events</li><li>5,000 contacts</li><li>1,000 emails a month through Goldex</li><li>2,000 AI actions a month</li><li>Custom backgrounds, video loops, effects</li><li>Image attachments and automations</li></ul><a class="btn primary" href="app.html#/signup">Join Pro</a><p class="for" style="margin:.6rem 0 0;font-size:.75rem"><span data-mo="Billed monthly" data-yr="$79 billed yearly">Billed monthly</span></p></div>
-  <div class="plan glass"><h3>Events</h3><div class="price">$39<small>/mo</small></div><p class="for">For hosts, teams, and anyone running a room.</p><ul><li>Everything in Pro, 3 seats</li><li>25,000 contacts</li><li>5,000 emails and 300 texts a month</li><li>10,000 AI actions a month</li><li>2 Living Portrait credits a month</li><li>iMessage line add-on eligible</li></ul><a class="btn" href="app.html#/signup">Join Events</a></div>
-  <div class="plan glass"><span class="tag">First 500</span><h3>Founding Member</h3><div class="price">$99<small> once</small></div><p class="for">Pro for life and a free sticker pack, before the price goes up.</p><ul><li>Pro, forever</li><li>One free NFC sticker pack</li><li>Founding badge on your card</li><li>First access to every new feature</li></ul><a class="btn primary" href="#beta">Claim a seat</a></div>
+ <p class="sub">Three plans. Start free at your next event.</p>
+ <div class="toggle" role="group" aria-label="Billing period"><button class="on" data-b="mo">Monthly</button><button data-b="yr">Yearly</button><span class="save">2 months free</span></div>
+ <div class="plans three">
+  <div class="plan glass"><h3>Free</h3><div class="price">$0</div><p class="for">Enough to run your first event and feel it work.</p><ul><li>1 card, 1 event</li><li>100 contacts</li><li>Voice and notes intake</li><li>Text from your phone</li><li>25 emails a month</li></ul><a class="btn" href="app.html#/signup">Start free</a></div>
+  <div class="plan glass pop"><span class="tag">Most members</span><h3>Pro</h3><div class="price"><span data-mo="$12" data-yr="$10">$12</span><small>/mo</small></div><p class="for">Your whole network, sorted and followed up.</p><ul><li>Public, Private, and Custom cards</li><li>Unlimited events</li><li>5,000 contacts</li><li>1,000 emails a month</li><li>AI import and sorting</li><li>Effects, automations, no footer</li></ul><a class="btn primary" href="app.html#/signup">Join Pro</a><p class="for" style="margin:.6rem 0 0;font-size:.75rem"><span data-mo="Billed monthly" data-yr="$120 billed yearly">Billed monthly</span></p></div>
+  <div class="plan glass"><h3>Team</h3><div class="price">$49<small>/mo</small></div><p class="for">For hosts and teams working the same room.</p><ul><li>Everything in Pro</li><li>5 seats</li><li>25,000 contacts</li><li>5,000 emails a month</li><li>1 Living Portrait a month</li></ul><a class="btn" href="app.html#/signup">Start Team</a></div>
  </div>
+ <p class="sub" style="margin-top:1.4rem">Add-ons, only if you want them: Living Portrait (3 for $15). iMessage line for Team ($299 a month per sender). Founding offer: the first 500 members get Pro for $99 the first year.</p>
 </section>
 
 <section id="beta" class="rev">
  <div class="beta glass">
   <h2>The iOS beta opens to members first.</h2>
-  <p>The web app is live now. The iOS app ships through TestFlight to Founding Members and Pro subscribers in order of signup. Reserve a seat and we send the invite to your email.</p>
+  <p>The web app is live now. The iOS app ships through TestFlight to Pro members first, in order of signup. Reserve a seat and we send the invite to your email.</p>
   <div class="cta"><a class="btn primary" href="mailto:amechi@addcolormedia.com?subject=Goldex%20iOS%20beta%20seat&body=Name%3A%0AEmail%20on%20my%20Apple%20ID%3A%0APlan%20I%20want%20(Founding%20Member%20%2F%20Pro%20%2F%20Events)%3A">Reserve an iOS beta seat</a><a class="btn" href="app.html#/signup">Use the web app today</a></div>
   <div class="badges"><span>iPhone, iOS 17 or later</span><span>NFC stickers ship in the US</span><span>Web app works everywhere</span></div>
  </div>
